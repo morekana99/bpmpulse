@@ -1,0 +1,56 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\MoreKANA\\.ohos\\config\\default_bpmpulse_dFlishT9T6IcOUf073txF_hrSYfPKn28lYvqPZWS4XQ=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001B24FD4519279509F88E92D673A071EFD9F2FDDC3F2EC72425A3C8931DF99A22A8138F847ED82B3C",
+          "profile": "C:\\Users\\MoreKANA\\.ohos\\config\\default_bpmpulse_dFlishT9T6IcOUf073txF_hrSYfPKn28lYvqPZWS4XQ=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\MoreKANA\\.ohos\\config\\default_bpmpulse_dFlishT9T6IcOUf073txF_hrSYfPKn28lYvqPZWS4XQ=.p12",
+          "storePassword": "0000001B73C534FABA3DBA315CC1DB933303075B20C36EB2A8B794C0979A0BA79A612CD5EDAE226CB74C9C"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "targetSdkVersion": "6.1.0(23)",
+        "compatibleSdkVersion": "6.1.0(23)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}

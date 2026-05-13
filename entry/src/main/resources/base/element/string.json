@@ -1,0 +1,20 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "accelerometer_permission_reason",
+      "value": "用于摇一摇重置功能"
+    },
+    {
+      "name": "activity_motion_permission_reason",
+      "value": "用于识别握持手势，智能调整按钮位置"
+    }
+  ]
+}

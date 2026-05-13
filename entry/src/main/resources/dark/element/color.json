@@ -1,0 +1,32 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#F2F2F7"
+    },
+    {
+      "name": "app_bg_primary",
+      "value": "#191919"
+    },
+    {
+      "name": "app_bg_card",
+      "value": "#242424"
+    },
+    {
+      "name": "app_text_primary",
+      "value": "#E6E6E6"
+    },
+    {
+      "name": "app_text_secondary",
+      "value": "#999999"
+    },
+    {
+      "name": "app_text_hint",
+      "value": "#666666"
+    },
+    {
+      "name": "app_brand_blue",
+      "value": "#007DFF"
+    }
+  ]
+}

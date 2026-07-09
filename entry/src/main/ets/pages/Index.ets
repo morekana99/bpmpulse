@@ -1,4 +1,4 @@
-import { HdsTabs, HdsTabsController, hdsMaterial } from '@kit.UIDesignKit';
+import { HdsNavigation, HdsNavigationTitleMode, HdsTabs, HdsTabsController, HdsNavigationMenuContentOptions, ScrollEffectType, hdsMaterial, TextStyleMode } from '@kit.UIDesignKit';
 import { systemShare } from '@kit.ShareKit';
 import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { fileUri, fileIo as fs } from '@kit.CoreFileKit';
@@ -9,7 +9,6 @@ import { RecordPage } from './RecordPage';
 import { SongRecord } from '../models/SongRecord';
 import { DatabaseHelper } from '../database/DatabaseHelper';
 
-// 标签栏子组件 — 图标与文字垂直居中
 @Component
 struct TabBarItem {
   @StorageLink('currentTabIndex') currentTabIndex: number = 0;
@@ -24,7 +23,6 @@ struct TabBarItem {
   build() {
     Column({ space: 2 }) {
       if (this.isMultiSelectMode) {
-        // 多选模式：显示删除/分享
         Text(this.multiIcon)
           .fontSize(22)
           .lineHeight(24)
@@ -36,7 +34,6 @@ struct TabBarItem {
           .fontColor($r('app.color.app_text_primary'))
           .maxLines(1)
       } else {
-        // 普通模式：BPM/记录，选中态蓝色
         Text(this.icon)
           .fontSize(22)
           .lineHeight(24)
@@ -68,6 +65,11 @@ struct Index {
   private tabsController: HdsTabsController = new HdsTabsController();
   @StorageLink('currentTabIndex') currentTabIndex: number = 0;
   @StorageLink('isMultiSelectMode') isMultiSelectMode: boolean = false;
+  @StorageLink('multiSelectIds') multiSelectIds: number[] = [];
+  @StorageLink('allRecordIds') allRecordIds: number[] = [];
+
+  private scrollerForBpm: Scroller = new Scroller();
+  private scrollerForRecord: Scroller = new Scroller();
 
   onBackPress(): boolean {
     if (this.isMultiSelectMode) {
@@ -82,6 +84,35 @@ struct Index {
     AppStorage.setOrCreate('currentTabIndex', 0);
     AppStorage.setOrCreate('isMultiSelectMode', false);
     AppStorage.setOrCreate('multiSelectIds', [] as number[]);
+    DatabaseHelper.getInstance().queryAll().then((data: SongRecord[]) => {
+      AppStorage.setOrCreate('allRecordIds', data.map(r => r.id));
+    }).catch((err: Error) => {
+      console.error('Index: 加载记录ID失败:', err.message);
+    });
+  }
+
+  isAllSelected(): boolean {
+    if (!this.allRecordIds || !this.multiSelectIds) {
+      return false;
+    }
+    if (this.allRecordIds.length === 0 || this.multiSelectIds.length === 0) {
+      return false;
+    }
+    return this.allRecordIds.every(id => this.multiSelectIds.includes(id));
+  }
+
+  multiSelectAction(): void {
+    if (!this.isMultiSelectMode) {
+      AppStorage.setOrCreate('isMultiSelectMode', true);
+    } else {
+      if (this.isAllSelected()) {
+        AppStorage.setOrCreate('multiSelectIds', []);
+      } else {
+        if (this.allRecordIds && this.allRecordIds.length > 0) {
+          AppStorage.setOrCreate('multiSelectIds', [...this.allRecordIds]);
+        }
+      }
+    }
   }
 
   @Builder
@@ -108,7 +139,15 @@ struct Index {
     })
   }
 
-  // 删除选中记录（仅在记录页面操作）
+  toggleMultiSelect(): void {
+    if (this.isMultiSelectMode) {
+      AppStorage.setOrCreate('isMultiSelectMode', false);
+      AppStorage.setOrCreate('multiSelectIds', [] as number[]);
+    } else {
+      AppStorage.setOrCreate('isMultiSelectMode', true);
+    }
+  }
+
   deleteSelectedRecords() {
     const ids: number[] = AppStorage.get<number[]>('multiSelectIds') || [];
     if (ids.length === 0) {
@@ -142,7 +181,6 @@ struct Index {
     });
   }
 
-  // 分享选中记录
   async shareSelectedRecords() {
     const ids: number[] = AppStorage.get<number[]>('multiSelectIds') || [];
     if (ids.length === 0) {
@@ -184,8 +222,6 @@ struct Index {
         selectionMode: systemShare.SelectionMode.SINGLE
       });
 
-      AppStorage.setOrCreate('isMultiSelectMode', false);
-      AppStorage.setOrCreate('multiSelectIds', [] as number[]);
     } catch (err) {
       console.error('分享失败:', JSON.stringify(err));
       promptAction.showToast({ message: '分享失败', duration: 2000 });
@@ -193,15 +229,15 @@ struct Index {
   }
 
   build() {
-    Stack() {
+    HdsNavigation() {
       HdsTabs({ controller: this.tabsController, index: this.currentTabIndex }) {
         TabContent() {
-          BpmPage()
+          BpmPage({ scroller: this.scrollerForBpm })
         }
         .tabBar(this.bpmTabBar)
 
         TabContent() {
-          RecordPage()
+          RecordPage({ scroller: this.scrollerForRecord })
         }
         .tabBar(this.recordTabBar)
       }
@@ -210,14 +246,13 @@ struct Index {
       .vertical(false)
       .animationDuration(0)
       .scrollable(false)
-      .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP])
       .onChange((index: number) => {
         AppStorage.set('currentTabIndex', index);
       })
       .barFloatingStyle({
         barBottomMargin: 28,
         systemMaterialEffect: {
-          materialType: hdsMaterial.MaterialType.IMMERSIVE,
+          materialType: hdsMaterial.MaterialType.ADAPTIVE,
           materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
         },
         barOpacity: 0.99,
@@ -229,8 +264,43 @@ struct Index {
         }
       })
     }
+    .mode(NavigationMode.Stack)
+    .titleBar({
+      content: {
+        title: this.currentTabIndex === 0
+          ? { mainTitle: '' }
+          : { mainTitle: !this.isMultiSelectMode ? '歌曲信息' : (this.multiSelectIds.length === 0 ? '未选择' : `已选择${this.multiSelectIds.length}项`) },
+        menu: this.currentTabIndex === 1 ? {
+          value: [
+            {
+              content: {
+                label: this.isMultiSelectMode ? (this.isAllSelected() ? '取消全选' : '全选') : '多选',
+                type: TextStyleMode.NORMAL,
+                action: (): void => { this.multiSelectAction(); }
+              }
+            }
+          ],
+          maxCount: 1
+        } : undefined
+      },
+      style: {
+        scrollEffectOpts: {
+          enableScrollEffect: true,
+          scrollEffectType: ScrollEffectType.GRADIENT_BLUR
+        },
+        systemMaterialEffect: {
+          materialType: hdsMaterial.MaterialType.ADAPTIVE,
+          materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
+        }
+      },
+      avoidLayoutSafeArea: true,
+      enableComponentSafeArea: false
+    })
+    .titleMode(HdsNavigationTitleMode.MINI)
+    .bindToScrollable([this.scrollerForBpm, this.scrollerForRecord])
+    .hideBackButton(!this.isMultiSelectMode)
+    .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
     .width('100%')
     .height('100%')
-    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

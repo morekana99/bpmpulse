@@ -1,10 +1,12 @@
 import { motion } from '@kit.MultimodalAwarenessKit';
+import { vibrator } from '@kit.SensorServiceKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { SongRecord } from '../models/SongRecord';
 import { DatabaseHelper } from '../database/DatabaseHelper';
 
 @Component
 export struct BpmPage {
+  scroller: Scroller = new Scroller();
   @State tapTimes: number[] = [];
   @State bpm: number = 0;
   @State tapCount: number = 0;
@@ -25,6 +27,14 @@ export struct BpmPage {
     this.beatTrigger++;
     this.tapTimes.push(now);
     this.tapCount++;  // 独立递增，不受 tapTimes 截断影响
+
+    // 触觉反馈：短促跟手振动，usage=touch 低延迟优先级
+    vibrator.startVibration(
+      { type: 'time', duration: 20 },
+      { id: 0, usage: 'touch' }
+    ).catch((err: Error) => {
+      console.error('振动失败:', err.message);
+    });
 
     if (this.tapTimes.length >= 2) {
       const intervals: number[] = [];
@@ -52,6 +62,39 @@ export struct BpmPage {
     this.tapCount = 0;
     this.averageInterval = 0;
     this.lastTapTime = 0;
+  }
+
+  // 长按重置振动：实体按钮强反馈（按下）+ 延迟回弹短震（弹起），与点击的轻触区分
+  vibrateReset(): void {
+    vibrator.isSupportEffect('haptic.effect.hard').then((supported: boolean) => {
+      if (supported) {
+        vibrator.startVibration(
+          { type: 'preset', effectId: 'haptic.effect.hard' },
+          { id: 0, usage: 'physicalFeedback' }
+        ).catch((err: Error) => {
+          console.error('重置振动失败:', err.message);
+        });
+      } else {
+        // 设备不支持时降级：比点击更强更长的振动
+        vibrator.startVibration(
+          { type: 'time', duration: 45 },
+          { id: 0, usage: 'physicalFeedback' }
+        ).catch((err: Error) => {
+          console.error('重置振动失败:', err.message);
+        });
+      }
+      // 回弹短震：强震后延迟触发，模拟实体按钮弹起
+      setTimeout(() => {
+        vibrator.startVibration(
+          { type: 'time', duration: 15 },
+          { id: 0, usage: 'touch' }
+        ).catch((err: Error) => {
+          console.error('回弹振动失败:', err.message);
+        });
+      }, 120);
+    }).catch((err: Error) => {
+      console.error('查询振动效果失败:', err.message);
+    });
   }
 
   saveRecord() {
@@ -155,7 +198,7 @@ export struct BpmPage {
           .fontStyle(FontStyle.Italic)
           .fontWeight(FontWeight.Bold)
           .fontFamily('cursive')
-          .margin({ top: 60, bottom: 4 })
+          .margin({ top: 100, bottom: 4 })
           .fontColor($r('app.color.app_text_primary'))
           .letterSpacing(0.5)
           
@@ -245,8 +288,9 @@ export struct BpmPage {
         this.handleTap();
       })
       .gesture(
-        LongPressGesture({ repeat: false })
+        LongPressGesture({ repeat: false, duration: 400 })
           .onAction(() => {
+            this.vibrateReset();
             this.resetData();
           })
       )
@@ -349,7 +393,7 @@ export struct BpmPage {
             .margin({ bottom: 24 })
 
             Row() {
-              Button('取消', { type: ButtonType.Normal })
+              Button('取消', { type: ButtonType.Capsule })
                 .width(100)
                 .height(40)
                 .backgroundColor($r('app.color.app_bg_primary'))
@@ -390,7 +434,8 @@ export struct BpmPage {
 
 @Component
 struct HeartbeatWave {
-  private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D();
+  private renderSettings: RenderingContextSettings = new RenderingContextSettings(true);
+  private canvasContext: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.renderSettings);
   @Prop @Watch('onBeatTriggerChanged') beatTrigger: number = 0;
 
   private readonly bufferSize: number = 300;
@@ -447,14 +492,10 @@ struct HeartbeatWave {
       this.scanHead = 0;
     }
 
-    const noise: number = Math.sin(this.frameCount / 43) * 0.015 + Math.sin(this.frameCount / 29) * 0.008;
-    const idx: number = Math.floor(this.scanHead);
-    this.buffer[idx] += noise;
-
+    // beat 贡献温和衰减，逐渐回归水面基线
+    // 水面波动在 draw 中按空间位置渲染，保证连续平滑，避免单点噪声造成的密集抖动
     for (let i = 0; i < this.bufferSize; i++) {
-      if (i !== idx) {
-        this.buffer[i] *= 0.98;
-      }
+      this.buffer[i] *= 0.985;
     }
 
     this.draw();
@@ -480,9 +521,16 @@ struct HeartbeatWave {
     const headIdx: number = Math.floor(this.scanHead);
     const headX: number = headIdx * stepX;
 
+    // 平稳状态水面波动：基于空间位置 i 与时间 frameCount 的超低频正弦叠加
+    // 波长长（粗看近似直线）、幅度极小（细看可见轻微起伏），空间连续平滑
+    const waterPhase = (i: number): number => {
+      return Math.sin(i * 0.025 + this.frameCount * 0.02) * 0.028
+           + Math.sin(i * 0.017 + this.frameCount * 0.013) * 0.016;
+    };
+
     ctx.save();
     ctx.shadowColor = '#007DFF';
-    ctx.shadowBlur = 14;
+    ctx.shadowBlur = 6;
     ctx.strokeStyle = '#007DFF';
     ctx.lineWidth = 2.2;
     ctx.lineJoin = 'round';
@@ -493,7 +541,7 @@ struct HeartbeatWave {
     for (let i = headIdx; i < this.bufferSize; i++) {
       const val: number = this.buffer[i];
       const x: number = i * stepX;
-      const y: number = midY - val * scale;
+      const y: number = midY - val * scale + waterPhase(i) * scale;
       if (!started) {
         ctx.moveTo(x, y);
         started = true;
@@ -508,7 +556,7 @@ struct HeartbeatWave {
     for (let i = 0; i < headIdx; i++) {
       const val: number = this.buffer[i];
       const x: number = i * stepX;
-      const y: number = midY - val * scale;
+      const y: number = midY - val * scale + waterPhase(i) * scale;
       if (!started) {
         ctx.moveTo(x, y);
         started = true;
@@ -521,10 +569,10 @@ struct HeartbeatWave {
 
     ctx.save();
     ctx.shadowColor = '#007DFF';
-    ctx.shadowBlur = 30;
+    ctx.shadowBlur = 12;
     ctx.fillStyle = '#007DFF';
     ctx.beginPath();
-    ctx.arc(headX, midY - this.buffer[headIdx] * scale, 3.5, 0, Math.PI * 2);
+    ctx.arc(headX, midY - this.buffer[headIdx] * scale + waterPhase(headIdx) * scale, 3.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }

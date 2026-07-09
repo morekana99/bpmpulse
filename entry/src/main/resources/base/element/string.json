@@ -15,6 +15,10 @@
     {
       "name": "activity_motion_permission_reason",
       "value": "用于识别握持手势，智能调整按钮位置"
+    },
+    {
+      "name": "vibrate_permission_reason",
+      "value": "用于点击节拍时的触觉反馈"
     }
   ]
 }

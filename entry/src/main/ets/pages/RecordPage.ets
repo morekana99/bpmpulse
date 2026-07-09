@@ -1,9 +1,11 @@
 import { SongRecord } from '../models/SongRecord';
 import { DatabaseHelper } from '../database/DatabaseHelper';
+import { vibrator } from '@kit.SensorServiceKit';
 
 @Entry
 @Component
 export struct RecordPage {
+  scroller: Scroller = new Scroller();
   @State records: SongRecord[] = [];
   @StorageProp('recordsNeedRefresh') @Watch('loadRecords') refreshFlag: number = 0;
   @StorageLink('isMultiSelectMode') isMultiSelectMode: boolean = false;
@@ -16,6 +18,7 @@ export struct RecordPage {
   loadRecords(): void {
     DatabaseHelper.getInstance().queryAll().then((data: SongRecord[]) => {
       this.records = data;
+      AppStorage.setOrCreate('allRecordIds', data.map(r => r.id));
       console.log('RecordPage: 记录已加载，数量:', this.records.length);
     }).catch((err: Error) => {
       console.error('RecordPage: 加载记录失败:', err.message);
@@ -135,13 +138,20 @@ export struct RecordPage {
     .gesture(
       LongPressGesture({ repeat: false, duration: 500 })
         .onAction(() => {
+          // 轻微振动反馈：进入多选
+          vibrator.startVibration(
+            { type: 'time', duration: 20 },
+            { id: 0, usage: 'touch' }
+          ).catch((err: Error) => {
+            console.error('振动失败:', err.message);
+          });
           this.enterMultiSelect(record.id);
         })
     )
   }
 
   build() {
-    Stack() {
+    Stack({ alignContent: Alignment.TopStart }) {
       if (this.records.length === 0) {
         Column() {
           Text('\u2630')
@@ -165,64 +175,24 @@ export struct RecordPage {
         .alignItems(HorizontalAlign.Center)
         .backgroundColor($r('app.color.app_bg_primary'))
       } else {
-        Scroll() {
+        Scroll(this.scroller) {
           Column({ space: 12 }) {
             ForEach(this.records, (record: SongRecord) => {
               this.recordCard(record)
             }, (record: SongRecord) => record.id.toString())
           }
           .width('100%')
-          .padding({ left: 16, right: 16, top: 125, bottom: 16 })
+          .padding({ left: 16, right: 16, top: 116, bottom: 120 })
           .alignItems(HorizontalAlign.Start)
         }
         .width('100%')
         .height('100%')
+        .align(Alignment.Top)
+        .clipContent(ContentClipMode.SAFE_AREA)
         .scrollBar(BarState.Auto)
         .edgeEffect(EdgeEffect.Spring)
         .backgroundColor($r('app.color.app_bg_primary'))
       }
-
-      Row() {
-        Text('歌曲记录')
-          .fontSize(24)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.app_text_primary'))
-
-        Blank()
-
-        Row() {
-          Text(this.isMultiSelectMode ? '取消' : '多选')
-            .fontSize(13)
-            .fontWeight(FontWeight.Medium)
-            .fontColor($r('app.color.app_text_primary'))
-        }
-        .width(70)
-        .height(32)
-        .borderRadius(16)
-        .justifyContent(FlexAlign.Center)
-        .backgroundBlurStyle(BlurStyle.Thin, {
-          colorMode: ThemeColorMode.SYSTEM,
-          adaptiveColor: AdaptiveColor.DEFAULT,
-          scale: 1.0
-        })
-        .onClick(() => {
-          if (this.isMultiSelectMode) {
-            this.exitMultiSelect();
-          } else {
-            this.isMultiSelectMode = true;
-            this.selectedIds = [];
-          }
-        })
-      }
-      .width('100%')
-      .padding({ left: 24, right: 24, top: 60, bottom: 20 })
-      .backgroundBlurStyle(BlurStyle.Thin, {
-        colorMode: ThemeColorMode.SYSTEM,
-        adaptiveColor: AdaptiveColor.DEFAULT,
-        scale: 1.0
-      })
-      .position({ x: 0, y: 0 })
-      .zIndex(10)
     }
     .width('100%')
     .height('100%')

@@ -2,6 +2,8 @@
 /oh_modules
 /local.properties
 /.idea
+/.vscode
+/.codebuddy
 **/build
 /.hvigor
 .cxx

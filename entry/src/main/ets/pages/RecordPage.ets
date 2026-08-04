@@ -1,8 +1,8 @@
+import { uiMaterial } from '@kit.ArkUI';
 import { SongRecord } from '../models/SongRecord';
 import { DatabaseHelper } from '../database/DatabaseHelper';
 import { vibrator } from '@kit.SensorServiceKit';
 
-@Entry
 @Component
 export struct RecordPage {
   scroller: Scroller = new Scroller();
@@ -10,6 +10,11 @@ export struct RecordPage {
   @StorageProp('recordsNeedRefresh') @Watch('loadRecords') refreshFlag: number = 0;
   @StorageLink('isMultiSelectMode') isMultiSelectMode: boolean = false;
   @StorageLink('multiSelectIds') selectedIds: number[] = [];
+  @StorageLink('isSearching') isSearching: boolean = false;
+  @State searchOffset: number = 0;
+  // 搜索入口栏顶部留白（状态栏+标题栏）与完全隐藏所需位移
+  private readonly SEARCH_BAR_TOP: number = 96;
+  private readonly SEARCH_BAR_HIDE: number = 140;
 
   aboutToAppear(): void {
     this.loadRecords();
@@ -51,9 +56,57 @@ export struct RecordPage {
     this.selectedIds = [];
   }
 
+  enterSearch(): void {
+    this.getUIContext()?.animateTo({ duration: 300, curve: Curve.EaseInOut }, () => {
+      this.isSearching = true;
+    });
+  }
+
+  exitSearch(): void {
+    // 收起键盘
+    this.searchOffset = 0;
+    this.getUIContext()?.animateTo({ duration: 300, curve: Curve.EaseInOut }, () => {
+      this.isSearching = false;
+    });
+  }
+
   formatTime(timestamp: number): string {
     const date = new Date(timestamp);
     return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+  }
+
+  @Builder
+  searchEntryBar() {
+    // 外层负责定位和边距
+    Row() {
+      Row({ space: 8 }) {
+        SymbolGlyph($r('sys.symbol.magnifyingglass'))
+          .fontSize(18)
+          .fontColor([$r('app.color.app_text_hint')])
+        Text('搜索歌曲、歌手或BPM')
+          .fontSize(15)
+          .fontColor($r('app.color.app_text_hint'))
+          .layoutWeight(1)
+      }
+      .width('100%')
+      .height(40)
+      .padding({ left: 16, right: 16 })
+      .alignItems(VerticalAlign.Center)
+      // HDS 沉浸光感：挂载官方 systemMaterial 沉浸材质（THIN 薄样式，官方指定用于搜索框场景），
+      // 背景透明以透出材质，由系统统一接管背景、边框与阴影，无需手写模糊。
+      .backgroundColor(Color.Transparent)
+      .borderRadius(22)
+      .systemMaterial(new uiMaterial.ImmersiveMaterial({
+        style: uiMaterial.ImmersiveStyle.THIN
+      }))
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16 })
+    .margin({ top: this.SEARCH_BAR_TOP })
+    .translate({ y: -Math.min(Math.max(this.searchOffset, 0), this.SEARCH_BAR_HIDE) })
+    .onClick(() => {
+      this.enterSearch();
+    })
   }
 
   @Builder
@@ -182,17 +235,27 @@ export struct RecordPage {
             }, (record: SongRecord) => record.id.toString())
           }
           .width('100%')
-          .padding({ left: 16, right: 16, top: 116, bottom: 120 })
+          .padding({ left: 16, right: 16, top: 148, bottom: 120 })
           .alignItems(HorizontalAlign.Start)
         }
         .width('100%')
         .height('100%')
         .align(Alignment.Top)
         .clipContent(ContentClipMode.SAFE_AREA)
-        .scrollBar(BarState.Auto)
+        .scrollBar(BarState.Off)
         .edgeEffect(EdgeEffect.Spring)
         .backgroundColor($r('app.color.app_bg_primary'))
+        .onDidScroll(() => {
+          this.searchOffset = this.scroller.currentOffset().yOffset;
+        })
       }
+
+      // 搜索入口栏：随内容上滑消失，下拉到顶时固定不跟随
+      if (this.records.length > 0 && !this.isSearching) {
+        this.searchEntryBar()
+      }
+
+
     }
     .width('100%')
     .height('100%')

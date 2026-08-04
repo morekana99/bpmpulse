@@ -407,7 +407,7 @@ export struct BpmPage {
                 .width(100)
                 .height(40)
                 .backgroundColor(this.songName.trim().length > 0 && this.artistName.trim().length > 0 ? $r('app.color.app_brand_blue') : '#CCCCCC')
-                .fontColor('#FFFFFF')
+                .fontColor($r('sys.color.comp_background_list_card'))
                 .enabled(this.songName.trim().length > 0 && this.artistName.trim().length > 0)
                 .onClick(() => {
                   this.saveRecord();
@@ -455,12 +455,22 @@ struct HeartbeatWave {
       this.buffer.push(0);
     }
     this.precomputeBeatWaveform();
-    this.timerId = setInterval(() => this.tick(), 32);
   }
 
   aboutToDisappear(): void {
+    this.stopTimer();
+  }
+
+  // 启动绘制定时器（仅当画布尺寸有效时），应在 onReady 后调用
+  private startTimer(): void {
+    this.stopTimer();
+    this.timerId = setInterval(() => this.tick(), 32);
+  }
+
+  private stopTimer(): void {
     if (this.timerId > 0) {
       clearInterval(this.timerId);
+      this.timerId = -1;
     }
   }
 
@@ -503,8 +513,9 @@ struct HeartbeatWave {
 
   draw(): void {
     const ctx: CanvasRenderingContext2D = this.canvasContext;
-    const w: number = this.canvasWidth;
-    const h: number = this.canvasHeight;
+    // 优先使用 onAreaChange 设置的尺寸；若其未触发/异常，则回退到 CanvasRenderingContext2D 自带宽高（onReady 后确定可用）
+    const w: number = this.canvasWidth > 0 ? this.canvasWidth : (this.canvasContext?.width ?? 0);
+    const h: number = this.canvasHeight > 0 ? this.canvasHeight : (this.canvasContext?.height ?? 0);
     if (w <= 0 || h <= 0) {
       return;
     }
@@ -582,12 +593,28 @@ struct HeartbeatWave {
       Canvas(this.canvasContext)
         .width('100%')
         .height('100%')
+        // onReady 是画布宽高确定、可绘制且已清空的官方时机，在此启动动画最可靠（SDK 升级后 onAreaChange 时序不再稳定）
+        .onReady(() => {
+          this.canvasWidth = Number(this.canvasContext.width);
+          this.canvasHeight = Number(this.canvasContext.height);
+          this.startTimer();
+        })
+        .onAreaChange((newValue: Area) => {
+          this.canvasWidth = Number(newValue.width);
+          this.canvasHeight = Number(newValue.height);
+        })
+        // HdsTabs 切到其它页签时本页内容被移出窗口，Canvas 进入"不可见不响应绘制"；切回时需恢复绘制
+        .onVisibleAreaChange([0.0, 1.0], (isVisible: boolean, currentRatio: number) => {
+          if (isVisible && currentRatio > 0) {
+            if (this.timerId <= 0) {
+              this.startTimer();
+            }
+          } else {
+            this.stopTimer();
+          }
+        })
     }
     .width('100%')
     .height('100%')
-    .onAreaChange((oldValue, newValue) => {
-      this.canvasWidth = Number(newValue.width);
-      this.canvasHeight = Number(newValue.height);
-    })
   }
 }

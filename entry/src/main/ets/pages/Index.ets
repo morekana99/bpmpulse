@@ -1,11 +1,11 @@
-import { HdsNavigation, HdsNavigationTitleMode, HdsTabs, HdsTabsController, HdsNavigationMenuContentOptions, ScrollEffectType, hdsMaterial, TextStyleMode } from '@kit.UIDesignKit';
+import { HdsNavigation, HdsNavigationTitleMode, HdsTabs, HdsTabsController, ScrollEffectType, hdsMaterial, TextStyleMode } from '@kit.UIDesignKit';
 import { systemShare } from '@kit.ShareKit';
 import { uniformTypeDescriptor as utd } from '@kit.ArkData';
 import { fileUri, fileIo as fs } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
-import { promptAction } from '@kit.ArkUI';
 import { BpmPage } from './BpmPage';
 import { RecordPage } from './RecordPage';
+import { SearchPage } from './SearchPage';
 import { SongRecord } from '../models/SongRecord';
 import { DatabaseHelper } from '../database/DatabaseHelper';
 
@@ -67,11 +67,18 @@ struct Index {
   @StorageLink('isMultiSelectMode') isMultiSelectMode: boolean = false;
   @StorageLink('multiSelectIds') multiSelectIds: number[] = [];
   @StorageLink('allRecordIds') allRecordIds: number[] = [];
+  @StorageLink('isSearching') isSearching: boolean = false;
 
   private scrollerForBpm: Scroller = new Scroller();
   private scrollerForRecord: Scroller = new Scroller();
 
   onBackPress(): boolean {
+    if (this.isSearching) {
+      this.getUIContext()?.animateTo({ duration: 300, curve: Curve.EaseInOut }, () => {
+        AppStorage.setOrCreate('isSearching', false);
+      });
+      return true;
+    }
     if (this.isMultiSelectMode) {
       AppStorage.setOrCreate('isMultiSelectMode', false);
       AppStorage.setOrCreate('multiSelectIds', [] as number[]);
@@ -84,6 +91,7 @@ struct Index {
     AppStorage.setOrCreate('currentTabIndex', 0);
     AppStorage.setOrCreate('isMultiSelectMode', false);
     AppStorage.setOrCreate('multiSelectIds', [] as number[]);
+    AppStorage.setOrCreate('isSearching', false);
     DatabaseHelper.getInstance().queryAll().then((data: SongRecord[]) => {
       AppStorage.setOrCreate('allRecordIds', data.map(r => r.id));
     }).catch((err: Error) => {
@@ -171,10 +179,18 @@ struct Index {
             AppStorage.setOrCreate('isMultiSelectMode', false);
             AppStorage.setOrCreate('multiSelectIds', [] as number[]);
             AppStorage.setOrCreate('recordsNeedRefresh', Date.now());
-            promptAction.showToast({ message: `已删除 ${rows} 条记录`, duration: 2000 });
+            try {
+              this.getUIContext().getPromptAction().showToast({ message: `已删除 ${rows} 条记录`, duration: 2000 });
+            } catch (error) {
+              // TODO: Implement error handling.
+            }
           }).catch((err: Error) => {
             console.error('删除记录失败:', err.message, JSON.stringify(err));
-            promptAction.showToast({ message: '删除失败，请重试', duration: 2000 });
+            try {
+              this.getUIContext().getPromptAction().showToast({ message: '删除失败，请重试', duration: 2000 });
+            } catch (error) {
+              // TODO: Implement error handling.
+            }
           });
         }
       }
@@ -220,15 +236,30 @@ struct Index {
       controller.show(context, {
         previewMode: systemShare.SharePreviewMode.DETAIL,
         selectionMode: systemShare.SelectionMode.SINGLE
+      }).catch(() => {
+        // TODO: Implement error handling.
       });
 
     } catch (err) {
       console.error('分享失败:', JSON.stringify(err));
-      promptAction.showToast({ message: '分享失败', duration: 2000 });
+      try {
+        this.getUIContext().getPromptAction().showToast({ message: '分享失败', duration: 2000 });
+      } catch (error) {
+        // TODO: Implement error handling.
+      }
     }
   }
 
   build() {
+    if (this.isSearching) {
+      // 进入搜索：搜索页从略微缩小+透明淡入放大呈现（精美页面过渡，参考华为音乐搜索）
+      SearchPage()
+        .transition(
+          TransitionEffect.opacity(0)
+            .combine(TransitionEffect.scale({ x: 0.96, y: 0.96 }))
+            .animation({ duration: 320, curve: Curve.Friction })
+        )
+    } else {
     HdsNavigation() {
       HdsTabs({ controller: this.tabsController, index: this.currentTabIndex }) {
         TabContent() {
@@ -267,10 +298,12 @@ struct Index {
     .mode(NavigationMode.Stack)
     .titleBar({
       content: {
-        title: this.currentTabIndex === 0
+        title: this.isSearching
           ? { mainTitle: '' }
-          : { mainTitle: !this.isMultiSelectMode ? '歌曲信息' : (this.multiSelectIds.length === 0 ? '未选择' : `已选择${this.multiSelectIds.length}项`) },
-        menu: this.currentTabIndex === 1 ? {
+          : (this.currentTabIndex === 0
+          ? { mainTitle: '' }
+          : { mainTitle: !this.isMultiSelectMode ? '歌曲信息' : (this.multiSelectIds.length === 0 ? '未选择' : `已选择${this.multiSelectIds.length}项`) }),
+        menu: this.isSearching ? undefined : (this.currentTabIndex === 1 ? {
           value: [
             {
               content: {
@@ -281,7 +314,7 @@ struct Index {
             }
           ],
           maxCount: 1
-        } : undefined
+        } : undefined)
       },
       style: {
         scrollEffectOpts: {
@@ -298,9 +331,15 @@ struct Index {
     })
     .titleMode(HdsNavigationTitleMode.MINI)
     .bindToScrollable([this.scrollerForBpm, this.scrollerForRecord])
-    .hideBackButton(!this.isMultiSelectMode)
-    .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
-    .width('100%')
-    .height('100%')
+    .hideBackButton(!(this.isMultiSelectMode || this.isSearching))
+      .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
+      .width('100%')
+      .height('100%')
+      // 主页面在进入/退出搜索时淡出淡入，与搜索页过渡呼应
+      .transition(
+        TransitionEffect.opacity(0)
+          .animation({ duration: 320, curve: Curve.Friction })
+      )
+    }
   }
 }

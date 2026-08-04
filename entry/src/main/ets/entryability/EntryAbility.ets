@@ -1,12 +1,13 @@
-import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
+import { ConfigurationConstant, UIAbility } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { DatabaseHelper } from '../database/DatabaseHelper';
+import { RecentSearchStore } from '../database/RecentSearchStore';
 
 const DOMAIN = 0x0000;
 
 export default class EntryAbility extends UIAbility {
-  onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+  onCreate(): void {
     try {
       // 跟随系统深浅模式
       this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
@@ -16,6 +17,10 @@ export default class EntryAbility extends UIAbility {
     // 初始化数据库
     DatabaseHelper.getInstance().init(this.context).catch((err: Error) => {
       hilog.error(DOMAIN, 'testTag', 'Database init failed: %{public}s', err.message);
+    });
+    // 初始化最近搜索偏好存储
+    RecentSearchStore.getInstance().init(this.context).catch((err: Error) => {
+      hilog.error(DOMAIN, 'testTag', 'RecentSearchStore init failed: %{public}s', err.message);
     });
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onCreate');
   }

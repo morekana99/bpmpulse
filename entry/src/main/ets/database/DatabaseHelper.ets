@@ -149,6 +149,85 @@ export class DatabaseHelper {
   }
 
   /**
+   * 关键字模糊查询（歌名或歌手匹配），按时间戳降序
+   */
+  async queryByKeyword(keyword: string): Promise<SongRecord[]> {
+    const store = this.ensureStore();
+    const predicates = new relationalStore.RdbPredicates(TABLE_NAME);
+    predicates.contains('song_name', keyword)
+      .or()
+      .contains('artist_name', keyword);
+    predicates.orderByDesc('timestamp');
+    const resultSet = await store.query(predicates);
+    return this.mapResultSet(resultSet);
+  }
+
+  /**
+   * BPM 范围查询，按与中心 BPM 的距离升序排序
+   */
+  async queryByBpmRange(center: number, range: number): Promise<SongRecord[]> {
+    const store = this.ensureStore();
+    const low = center - range;
+    const high = center + range;
+    const predicates = new relationalStore.RdbPredicates(TABLE_NAME);
+    predicates.between('bpm', low, high);
+    predicates.orderByAsc('bpm');
+    const resultSet = await store.query(predicates);
+    const records = this.mapResultSet(resultSet);
+    records.sort((a: SongRecord, b: SongRecord) => Math.abs(a.bpm - center) - Math.abs(b.bpm - center));
+    return records;
+  }
+
+  /**
+   * 综合搜索：歌曲名/歌手名模糊匹配；若输入为纯数字，则同时按 BPM 精确匹配。
+   * 说明：歌曲名本身也可能是纯数字，contains('song_name') 已覆盖该场景，
+   * 因此数字输入既匹配同名歌曲，也匹配对应 BPM 的记录。
+   */
+  async queryByKeywordOrBpm(keyword: string): Promise<SongRecord[]> {
+    const kw = keyword.trim();
+    if (!kw) {
+      return [];
+    }
+    const store = this.ensureStore();
+    const predicates = new relationalStore.RdbPredicates(TABLE_NAME);
+    predicates.contains('song_name', kw)
+      .or()
+      .contains('artist_name', kw);
+    // 纯数字：按 BPM 精确匹配（歌曲名含数字已由上方 contains 覆盖）
+    if (/^\d+$/.test(kw)) {
+      const num = Number(kw);
+      if (Number.isFinite(num)) {
+        predicates.or().equalTo('bpm', num);
+      }
+    }
+    predicates.orderByDesc('timestamp');
+    const resultSet = await store.query(predicates);
+    return this.mapResultSet(resultSet);
+  }
+
+  private mapResultSet(resultSet: relationalStore.ResultSet): SongRecord[] {
+    const records: SongRecord[] = [];
+    const count = resultSet.rowCount;
+    if (count > 0) {
+      resultSet.goToFirstRow();
+      for (let i = 0; i < count; i++) {
+        records.push({
+          id: resultSet.getLong(resultSet.getColumnIndex('id')),
+          songName: resultSet.getString(resultSet.getColumnIndex('song_name')),
+          artistName: resultSet.getString(resultSet.getColumnIndex('artist_name')),
+          bpm: resultSet.getLong(resultSet.getColumnIndex('bpm')),
+          timestamp: resultSet.getLong(resultSet.getColumnIndex('timestamp')),
+          tapCount: resultSet.getLong(resultSet.getColumnIndex('tap_count')),
+          averageInterval: resultSet.getDouble(resultSet.getColumnIndex('average_interval'))
+        });
+        resultSet.goToNextRow();
+      }
+    }
+    resultSet.close();
+    return records;
+  }
+
+  /**
    * 关闭数据库（应用退出时调用）
    */
   async close(): Promise<void> {

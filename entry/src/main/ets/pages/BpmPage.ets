@@ -1,4 +1,5 @@
 import { motion } from '@kit.MultimodalAwarenessKit';
+import { uiMaterial } from '@kit.ArkUI';
 import { vibrator } from '@kit.SensorServiceKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { SongRecord } from '../models/SongRecord';
@@ -12,9 +13,21 @@ export struct BpmPage {
   @State tapCount: number = 0;
   @State averageInterval: number = 0;
   @State lastTapTime: number = 0;
-  @State showRecordDialog: boolean = false;
-  @State songName: string = '';
-  @State artistName: string = '';
+  private dialogController: CustomDialogController = new CustomDialogController({
+    builder: BpmRecordDialog({
+      bpm: this.bpm,
+      onSave: (songName: string, artistName: string) => {
+        this.doSaveRecord(songName, artistName);
+      },
+      onCancel: () => {
+        this.dialogController.close();
+      }
+    }),
+    alignment: DialogAlignment.Center,
+    customStyle: true,
+    // 仅允许点击"取消"按钮或系统返回键关闭，点击弹窗外其它区域不消失
+    autoCancel: false
+  });
   @State isRightHanded: boolean = true;
   @State beatTrigger: number = 0;
   @State debugStatus: string = '初始化...';
@@ -97,15 +110,16 @@ export struct BpmPage {
     });
   }
 
-  saveRecord() {
-    if (!this.songName.trim() || !this.artistName.trim()) {
+  // 由自定义弹窗回调：保存一条记录
+  doSaveRecord(songName: string, artistName: string) {
+    if (!songName.trim() || !artistName.trim()) {
       return;
     }
 
     const record: SongRecord = {
       id: Date.now(),
-      songName: this.songName,
-      artistName: this.artistName,
+      songName: songName,
+      artistName: artistName,
       bpm: this.bpm,
       timestamp: Date.now(),
       tapCount: this.tapCount,
@@ -119,20 +133,28 @@ export struct BpmPage {
       console.error('保存记录失败:', err.message);
     });
 
-    this.songName = '';
-    this.artistName = '';
-    this.showRecordDialog = false;
+    this.dialogController.close();
     console.log('记录已保存:', JSON.stringify(record));
   }
 
   openRecordDialog() {
-    this.showRecordDialog = true;
-  }
-
-  closeRecordDialog() {
-    this.showRecordDialog = false;
-    this.songName = '';
-    this.artistName = '';
+    // 每次打开用当前 bpm 重建控制器，避免字段初始化时捕获的初始值（0）
+    this.dialogController = new CustomDialogController({
+      builder: BpmRecordDialog({
+        bpm: this.bpm,
+        onSave: (songName: string, artistName: string) => {
+          this.doSaveRecord(songName, artistName);
+        },
+        onCancel: () => {
+          this.dialogController.close();
+        }
+      }),
+      alignment: DialogAlignment.Center,
+      customStyle: true,
+      // 仅允许点击"取消"按钮或系统返回键关闭，点击弹窗外其它区域不消失
+      autoCancel: false
+    });
+    this.dialogController.open();
   }
 
   aboutToAppear(): void {
@@ -243,7 +265,7 @@ export struct BpmPage {
 
         Row() {
           Column() {
-            Text('点击次数')
+            Text($r('app.string.bpm_tap_count_label'))
               .fontSize(16)
               .fontColor($r('app.color.app_text_hint'))
             Text(this.tapCount.toString())
@@ -254,10 +276,10 @@ export struct BpmPage {
           .margin({ right: 40 })
 
           Column() {
-            Text('平均间隔')
+            Text($r('app.string.bpm_avg_interval_label'))
               .fontSize(16)
               .fontColor($r('app.color.app_text_hint'))
-            Text(this.averageInterval > 0 ? this.averageInterval.toFixed(2) + ' 秒' : '--')
+            Text(this.averageInterval > 0 ? $r('app.string.bpm_avg_interval_value', this.averageInterval.toFixed(2)) : '--')
               .fontSize(24)
               .fontWeight(FontWeight.Medium)
               .fontColor($r('app.color.app_text_primary'))
@@ -265,13 +287,13 @@ export struct BpmPage {
         }
         .margin({ bottom: 40 })
 
-        Text('点击屏幕任意位置，跟随音乐节奏点击')
+        Text($r('app.string.bpm_tap_hint'))
           .fontSize(14)
           .fontColor($r('app.color.app_text_hint'))
           .margin({ bottom: 10 })
           .textAlign(TextAlign.Center)
 
-        Text('长按屏幕可以重置数据')
+        Text($r('app.string.bpm_longpress_hint'))
           .fontSize(12)
           .fontColor('#AAAAAA')
           .margin({ bottom: 40 })
@@ -308,23 +330,12 @@ export struct BpmPage {
         .borderRadius(32)
         .justifyContent(FlexAlign.Center)
         .alignItems(HorizontalAlign.Center)
-        .backgroundBlurStyle(BlurStyle.Regular, {
-          colorMode: ThemeColorMode.SYSTEM,
-          adaptiveColor: AdaptiveColor.DEFAULT,
-          scale: 1.0
-        })
-        .backgroundColor('#44F2F2F7')
-        .border({
-          width: 0.5,
-          color: '#80FFFFFF',
-          style: BorderStyle.Solid
-        })
-        .shadow({
-          radius: 16,
-          color: '#18000000',
-          offsetX: 0,
-          offsetY: 6
-        })
+        // HDS 沉浸光感：挂载官方 systemMaterial 沉浸材质（THICK 厚样式，圆形按钮更突出），
+        // 背景透明以透出材质，由系统统一接管背景、边框与阴影，无需手写模糊。
+        .backgroundColor(Color.Transparent)
+        .systemMaterial(new uiMaterial.ImmersiveMaterial({
+          style: uiMaterial.ImmersiveStyle.THICK
+        }))
         .onClick(() => {
           this.openRecordDialog();
         })
@@ -339,96 +350,109 @@ export struct BpmPage {
       })
       .zIndex(100)
       .hitTestBehavior(HitTestMode.Transparent)
-
-      // 记录弹窗
-      if (this.showRecordDialog) {
-        Stack() {
-          Column()
-            .width('100%')
-            .height('100%')
-            .backgroundColor('#80000000')
-            .hitTestBehavior(HitTestMode.Block)
-            .onClick(() => {
-              this.closeRecordDialog();
-            })
-
-          Column() {
-            Text('记录歌曲信息')
-              .fontSize(20)
-              .fontWeight(FontWeight.Bold)
-              .fontColor($r('app.color.app_text_primary'))
-              .margin({ top: 24, bottom: 20 })
-
-            TextInput({ placeholder: '歌曲名称' })
-              .width('80%')
-              .height(48)
-              .backgroundColor($r('app.color.app_bg_primary'))
-              .borderRadius(8)
-              .padding({ left: 12, right: 12 })
-              .margin({ bottom: 16 })
-              .onChange((value: string) => {
-                this.songName = value;
-              })
-
-            TextInput({ placeholder: '歌手' })
-              .width('80%')
-              .height(48)
-              .backgroundColor($r('app.color.app_bg_primary'))
-              .borderRadius(8)
-              .padding({ left: 12, right: 12 })
-              .margin({ bottom: 16 })
-              .onChange((value: string) => {
-                this.artistName = value;
-              })
-
-            Row() {
-              Text('BPM: ')
-                .fontSize(16)
-                .fontColor($r('app.color.app_text_secondary'))
-              Text(this.bpm.toString())
-                .fontSize(16)
-                .fontWeight(FontWeight.Bold)
-                .fontColor($r('app.color.app_brand_blue'))
-            }
-            .margin({ bottom: 24 })
-
-            Row() {
-              Button('取消', { type: ButtonType.Capsule })
-                .width(100)
-                .height(40)
-                .backgroundColor($r('app.color.app_bg_primary'))
-                .fontColor($r('app.color.app_text_primary'))
-                .onClick(() => {
-                  this.closeRecordDialog();
-                })
-                .margin({ right: 16 })
-
-              Button('保存', { type: ButtonType.Capsule })
-                .width(100)
-                .height(40)
-                .backgroundColor(this.songName.trim().length > 0 && this.artistName.trim().length > 0 ? $r('app.color.app_brand_blue') : '#CCCCCC')
-                .fontColor($r('sys.color.comp_background_list_card'))
-                .enabled(this.songName.trim().length > 0 && this.artistName.trim().length > 0)
-                .onClick(() => {
-                  this.saveRecord();
-                })
-            }
-            .margin({ bottom: 24 })
-          }
-          .width('82%')
-          .backgroundColor($r('app.color.app_bg_card'))
-          .borderRadius(16)
-          .shadow({ radius: 20, color: '#40000000', offsetX: 0, offsetY: 4 })
-          .alignItems(HorizontalAlign.Center)
-        }
-        .width('100%')
-        .height('100%')
-        .position({ x: 0, y: 0 })
-        .zIndex(200)
-      }
     }
     .width('100%')
     .height('100%')
+  }
+}
+
+// 添加记录弹窗：采用官方 CustomDialog 组件，模态居中卡片。
+// 整体使用 HDS 沉浸材质（systemMaterial 模糊背景，透出底层内容）；
+// 输入框与按钮无边框，使用 app_bg_card 纯色块（浅色纯白 / 深色 #242424）与模糊背景形成对比，深浅模式均清晰。
+// autoCancel: false，仅点击"取消"按钮或系统返回键才会关闭，点击弹窗外其它区域不消失。
+// 由 CustomDialogController 原生避让软键盘，首个输入框 defaultFocus 自动弹出键盘。
+@CustomDialog
+struct BpmRecordDialog {
+  controller: CustomDialogController = new CustomDialogController({ builder: '' });
+  bpm: number = 0;
+  onSave: (songName: string, artistName: string) => void = () => {};
+  onCancel: () => void = () => {};
+  @State songName: string = '';
+  @State artistName: string = '';
+
+  // 每次打开重置输入，避免上次内容残留
+  aboutToAppear(): void {
+    this.songName = '';
+    this.artistName = '';
+  }
+
+  build() {
+    Column() {
+      Text($r('app.string.bpm_save_info'))
+        .fontSize(20)
+        .fontWeight(FontWeight.Bold)
+        .fontColor($r('app.color.app_text_primary'))
+        .margin({ top: 24, bottom: 20 })
+
+      TextInput({ placeholder: $r('app.string.song_name_placeholder') })
+        .width('80%')
+        .height(48)
+        // 无边框：用 app_bg_card 纯色块（浅色纯白 / 深色 #242424）与 HDS 模糊半透明背景形成对比
+        .backgroundColor($r('app.color.app_bg_card'))
+        .borderRadius(8)
+        .padding({ left: 12, right: 12 })
+        .margin({ bottom: 16 })
+        .defaultFocus(true)
+        .onChange((value: string) => {
+          this.songName = value;
+        })
+
+      TextInput({ placeholder: $r('app.string.artist_placeholder') })
+        .width('80%')
+        .height(48)
+        .backgroundColor($r('app.color.app_bg_card'))
+        .borderRadius(8)
+        .padding({ left: 12, right: 12 })
+        .margin({ bottom: 16 })
+        .onChange((value: string) => {
+          this.artistName = value;
+        })
+
+      Row() {
+        Text('BPM: ')
+          .fontSize(16)
+          .fontColor($r('app.color.app_text_secondary'))
+        Text(this.bpm.toString())
+          .fontSize(16)
+          .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.app_brand_blue'))
+      }
+      .margin({ bottom: 24 })
+
+      Row() {
+        Button($r('app.string.dialog_cancel'), { type: ButtonType.Capsule })
+          .width(100)
+          .height(40)
+          // 无边框：用 app_bg_card 纯色块与 HDS 模糊背景区分，深色模式下同样清晰
+          .backgroundColor($r('app.color.app_bg_card'))
+          .fontColor($r('app.color.app_text_primary'))
+          .onClick(() => {
+            this.onCancel();
+          })
+          .margin({ right: 16 })
+
+        Button($r('app.string.dialog_save'), { type: ButtonType.Capsule })
+          .width(100)
+          .height(40)
+          .backgroundColor(this.songName.trim().length > 0 && this.artistName.trim().length > 0 ? $r('app.color.app_brand_blue') : $r('app.color.app_text_hint'))
+          .fontColor(this.songName.trim().length > 0 && this.artistName.trim().length > 0 ? Color.White : $r('app.color.app_bg_card'))
+          .enabled(this.songName.trim().length > 0 && this.artistName.trim().length > 0)
+          .onClick(() => {
+            this.onSave(this.songName, this.artistName);
+          })
+      }
+      .margin({ bottom: 24 })
+    }
+    .width('82%')
+    // HDS 沉浸材质：弹窗整体使用系统 material 模糊背景，透出底层内容，
+    // 仅输入框与按钮区域保持纯色不透明（见上方 TextInput 与按钮 Row）。
+    .backgroundColor(Color.Transparent)
+    .systemMaterial(new uiMaterial.ImmersiveMaterial({
+      style: uiMaterial.ImmersiveStyle.THICK
+    }))
+    .borderRadius(16)
+    .shadow({ radius: 20, color: '#40000000', offsetX: 0, offsetY: 4 })
+    .alignItems(HorizontalAlign.Center)
   }
 }
 
@@ -488,9 +512,11 @@ struct HeartbeatWave {
 
   onBeatTriggerChanged(): void {
     const idx: number = Math.floor(this.scanHead);
+    // 点击波形增益：抬高绘制高度约 15%，增强跟手反馈（不影响水面基线）
+    const gain: number = 1.15;
     for (let i = 0; i < 25; i++) {
       const writeIdx: number = (idx + i) % this.bufferSize;
-      this.buffer[writeIdx] = this.beatWaveform[i];
+      this.buffer[writeIdx] = this.beatWaveform[i] * gain;
     }
   }
 
@@ -502,10 +528,10 @@ struct HeartbeatWave {
       this.scanHead = 0;
     }
 
-    // beat 贡献温和衰减，逐渐回归水面基线
+    // beat 贡献衰减，逐渐回归水面基线。
     // 水面波动在 draw 中按空间位置渲染，保证连续平滑，避免单点噪声造成的密集抖动
     for (let i = 0; i < this.bufferSize; i++) {
-      this.buffer[i] *= 0.985;
+      this.buffer[i] *= 0.961;
     }
 
     this.draw();

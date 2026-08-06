@@ -83,7 +83,7 @@ export struct RecordPage {
         SymbolGlyph($r('sys.symbol.magnifyingglass'))
           .fontSize(18)
           .fontColor([$r('app.color.app_text_hint')])
-        Text('搜索歌曲、歌手或BPM')
+        Text($r('app.string.search_placeholder'))
           .fontSize(15)
           .fontColor($r('app.color.app_text_hint'))
           .layoutWeight(1)
@@ -132,14 +132,17 @@ export struct RecordPage {
               .fontColor($r('app.color.app_text_primary'))
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
+              .width('100%')
 
             Text(record.artistName)
               .fontSize(14)
               .fontColor($r('app.color.app_text_secondary'))
               .maxLines(1)
               .textOverflow({ overflow: TextOverflow.Ellipsis })
+              .width('100%')
           }
           .flexGrow(1)
+          .flexShrink(1)
           .alignItems(HorizontalAlign.Start)
 
           Column({ space: 2 }) {
@@ -159,11 +162,11 @@ export struct RecordPage {
         .margin({ bottom: 8 })
 
         Row() {
-          Text(`\u2219 点击 ${record.tapCount}次`)
+          Text($r('app.string.record_tap_count', record.tapCount))
             .fontSize(12)
             .fontColor($r('app.color.app_text_hint'))
 
-          Text(`\u2219 间隔 ${record.averageInterval.toFixed(2)}秒`)
+          Text($r('app.string.record_avg_interval', record.averageInterval.toFixed(2)))
             .fontSize(12)
             .fontColor($r('app.color.app_text_hint'))
             .margin({ left: 12 })
@@ -212,12 +215,12 @@ export struct RecordPage {
             .margin({ bottom: 24 })
             .opacity(0.3)
 
-          Text('暂无记录')
+          Text($r('app.string.record_no_data'))
             .fontSize(18)
             .fontColor($r('app.color.app_text_hint'))
             .margin({ bottom: 8 })
 
-          Text('在BPM页面点击浮动按钮保存记录')
+          Text($r('app.string.record_empty_hint'))
             .fontSize(14)
             .fontColor($r('app.color.app_text_hint'))
             .textAlign(TextAlign.Center)

@@ -6,13 +6,11 @@ import { RecentSearchStore } from '../database/RecentSearchStore';
 
 @Component
 export struct SearchPage {
-  private searchController: SearchController = new SearchController();
+  private searchController: TextInputController = new TextInputController();
   @State keyword: string = '';
   @State recentSearches: string[] = [];
   @State results: SongRecord[] = [];
 
-  // 最近搜索条目错落浮现
-  @State reveal: boolean = false;
   // 最近搜索编辑模式（点击垃圾桶进入，可逐条删除或清空）
   @State isEditMode: boolean = false;
   // 导航栏总高度（状态栏 + MINI标题栏），供内容区避让，避免被系统状态栏/导航栏遮挡
@@ -22,6 +20,46 @@ export struct SearchPage {
 
   private resultScroller: Scroller = new Scroller();
 
+  // 防抖计时器：输入停止一段时间后才自动写入最近搜索，避免逐字记录过于频繁
+  private searchTimer: number = -1;
+  // 兜底记录：退出搜索页时，若最后一个非空关键词尚未记录则补录
+  private pendingSave: string = '';
+
+  aboutToDisappear(): void {
+    // 页面销毁时清理防抖计时器，避免异步写入已销毁的页面
+    this.clearSearchTimer();
+  }
+
+  private clearSearchTimer(): void {
+    if (this.searchTimer !== -1) {
+      clearTimeout(this.searchTimer);
+      this.searchTimer = -1;
+    }
+  }
+
+  // 防抖保存：输入停止约 0.9s 后自动把关键词写入最近搜索（避免逐字记录）
+  private scheduleSaveRecent(kw: string): void {
+    if (!kw) {
+      return;
+    }
+    this.clearSearchTimer();
+    this.searchTimer = setTimeout(() => {
+      this.searchTimer = -1;
+      this.pendingSave = '';
+      this.saveRecent(kw);
+    }, 900);
+  }
+
+  // 立即写入当前防抖关键词并清理计时器（键盘搜索键/退出兜底时调用，保证只记录一次）
+  private flushSaveRecent(): void {
+    this.clearSearchTimer();
+    if (this.pendingSave) {
+      const kw = this.pendingSave;
+      this.pendingSave = '';
+      this.saveRecent(kw);
+    }
+  }
+
   aboutToAppear(): void {
     RecentSearchStore.getInstance().getAll().then((list: string[]) => {
       this.recentSearches = list;
@@ -30,10 +68,6 @@ export struct SearchPage {
     });
     // 计算状态栏高度，供内容区避让导航栏
     this.computeNavBarTop();
-    // 最近搜索条目错落浮现（页面切换的精美动画由 RecordPage -> SearchPage 过渡负责，此处仅列表内容轻微浮现）
-    this.getUIContext()?.animateTo({ duration: 380, curve: Curve.EaseOut }, () => {
-      this.reveal = true;
-    });
     // 自动聚焦搜索框并弹出软键盘
     setTimeout(() => {
       try {
@@ -46,9 +80,9 @@ export struct SearchPage {
 
   private computeNavBarTop(): void {
     try {
-      window.getLastWindow(getContext(this)).then((win: window.Window) => {
+      window.getLastWindow(this.getUIContext().getHostContext()).then((win: window.Window) => {
         const area: window.AvoidArea = win.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM);
-        const statusBarHeight: number = px2vp(area.topRect.height);
+        const statusBarHeight: number = this.getUIContext().px2vp(area.topRect.height);
         this.statusBarTop = statusBarHeight;
         // 状态栏 + 标题栏(56vp) + 少量间距
         this.navBarTop = statusBarHeight + 56 + 8;
@@ -61,6 +95,10 @@ export struct SearchPage {
   closeSearch(): void {
     this.searchController.stopEditing();
     this.isEditMode = false;
+    // 退出兜底：用户看到实时结果直接返回、未按键盘搜索键时，仍记录最后的关键词
+    if (this.pendingSave) {
+      this.flushSaveRecent();
+    }
     AppStorage.setOrCreate('isSearching', false);
   }
 
@@ -70,14 +108,21 @@ export struct SearchPage {
     const kw = value.trim();
     if (kw === '') {
       this.results = [];
+      // 清空输入时不记录
+      this.clearSearchTimer();
+      this.pendingSave = '';
       return;
     }
+    // 实时预览结果（不立即入史）
     DatabaseHelper.getInstance().queryByKeywordOrBpm(kw).then((data: SongRecord[]) => {
       this.results = data;
     }).catch((err: Error) => {
       console.error('SearchPage: 搜索失败:', err.message);
       this.results = [];
     });
+    // 防抖：输入停止约 0.9s 后自动记录，避免逐字记录过于频繁
+    this.pendingSave = kw;
+    this.scheduleSaveRecent(kw);
   }
 
   commitSearch(value: string): void {
@@ -87,6 +132,9 @@ export struct SearchPage {
     }
     this.keyword = kw;
     this.searchController.caretPosition(kw.length);
+    // 用户主动按键盘「搜索」键：取消待执行的防抖，直接记录，避免与防抖重复
+    this.clearSearchTimer();
+    this.pendingSave = '';
     this.saveRecent(kw);
     DatabaseHelper.getInstance().queryByKeywordOrBpm(kw).then((data: SongRecord[]) => {
       this.results = data;
@@ -99,6 +147,9 @@ export struct SearchPage {
   onRecentItemClick(item: string): void {
     this.keyword = item;
     this.searchController.caretPosition(item.length);
+    // 点击历史记录：取消待执行的防抖，避免把之前的输入残留写入
+    this.clearSearchTimer();
+    this.pendingSave = '';
     this.saveRecent(item);
     DatabaseHelper.getInstance().queryByKeywordOrBpm(item).then((data: SongRecord[]) => {
       this.results = data;
@@ -124,7 +175,7 @@ export struct SearchPage {
     RecentSearchStore.getInstance().clear().then(() => {
       this.recentSearches = [];
       try {
-        this.getUIContext().getPromptAction().showToast({ message: '已清空搜索记录', duration: 1500 });
+        this.getUIContext().getPromptAction().showToast({ message: $r('app.string.search_cleared_toast'), duration: 1500 });
       } catch (e) {
         // 提示失败不影响清空结果
       }
@@ -140,18 +191,18 @@ export struct SearchPage {
   }
 
   confirmClearAll(): void {
-    AlertDialog.show({
-      title: '清空搜索记录',
-      message: '确定要清空全部最近搜索记录吗？此操作不可恢复。',
+    this.getUIContext().showAlertDialog({
+      title: $r('app.string.search_clear_title'),
+      message: $r('app.string.search_clear_msg'),
       autoCancel: true,
       alignment: DialogAlignment.Center,
       primaryButton: {
-        value: '取消',
+        value: $r('app.string.dialog_cancel'),
         fontColor: '#007DFF',
         action: (): void => {}
       },
       secondaryButton: {
-        value: '清空',
+        value: $r('app.string.search_clear'),
         fontColor: '#E84040',
         action: (): void => {
           this.clearAllRecent();
@@ -167,31 +218,32 @@ export struct SearchPage {
     // 获得 HDS 同源的沉浸光感玻璃质感，与标题栏 systemMaterialEffect 材质体系一致；
     // Search 组件完全透明，可编辑，输入内容后右侧自动出现清除按钮。
     Row() {
-      Row() {
-        Search({ value: this.keyword, placeholder: '搜索歌曲、歌手或BPM', controller: this.searchController })
+      Row({ space: 0 }) {
+        SymbolGlyph($r('sys.symbol.magnifyingglass'))
+          .fontSize(18)
+          .fontColor([$r('app.color.app_text_hint')])
+        TextInput({ text: this.keyword, placeholder: $r('app.string.search_placeholder'), controller: this.searchController })
           .id('searchInput')
           .layoutWeight(1)
           .height(40)
+          .padding({ left: 8, right: 8 })
           .backgroundColor(Color.Transparent)
-          .searchIcon({ size: 16, color: $r('app.color.app_text_hint') })
           .placeholderColor($r('app.color.app_text_hint'))
           .placeholderFont({ size: 15 })
-          .textFont({ size: 15 })
+          .fontSize(15)
           .fontColor($r('app.color.app_text_primary'))
-          .cancelButton({
-            style: CancelButtonStyle.INPUT,
-            icon: { size: 16, color: $r('app.color.app_text_hint') }
-          })
+          // 键盘右下角按键显示为「搜索」而非「完成」，点击即保存并搜索
+          .enterKeyType(EnterKeyType.Search)
           .onChange((value: string) => {
             this.onKeywordChanged(value);
           })
-          .onSubmit((value: string) => {
-            this.commitSearch(value);
+          .onSubmit(() => {
+            this.commitSearch(this.keyword);
           })
       }
       .width('100%')
       .height(40)
-      .padding({ left: 8, right: 8 })
+      .padding({ left: 16, right: 16 })
       .alignItems(VerticalAlign.Center)
       // API 26 沉浸光感：挂载官方 systemMaterial 沉浸材质（THIN 薄样式，官方指定用于搜索框场景），
       // 材质由系统统一接管背景/边框/阴影并随算力与深浅色自适应，无需手写模糊；背景保持透明以透出材质。
@@ -203,23 +255,26 @@ export struct SearchPage {
     }
     .width('100%')
     .height('100%')
-    // 左侧预留返回按钮空间（HDS 返回键占位约 56vp），避免遮挡
-    .padding({ left: 60, right: 12 })
+    // 左侧预留返回按钮空间（HDS 返回键占位约 56vp），间距改为两倍，避免遮挡
+    .padding({ left: 65, right: 16 })
     .alignItems(VerticalAlign.Center)
   }
 
   @Builder
-  recentPill(item: string, index: number) {
+  recentPill(item: string) {
     Row({ space: 6 }) {
       Text(item)
         .fontSize(14)
         .fontColor($r('app.color.app_text_primary'))
         .maxLines(1)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
+        // 限制搜索词最大宽度，超长时省略，避免把右侧叉号顶出药丸背景
+        .constraintSize({ maxWidth: 220 })
       if (this.isEditMode) {
         SymbolGlyph($r('sys.symbol.xmark'))
           .fontSize(14)
           .fontColor([$r('app.color.app_text_hint')])
+          .flexShrink(0)
       }
     }
     // 药丸形态：圆角随内容自适应宽度；编辑模式下右侧更紧凑以容纳叉号
@@ -234,37 +289,41 @@ export struct SearchPage {
         this.onRecentItemClick(item);
       }
     })
-    .opacity(this.reveal ? 1 : 0)
-    .translate({ y: this.reveal ? 0 : 8 })
-    .animation({ duration: 300, curve: Curve.EaseOut, delay: index * 30 })
   }
 
   @Builder
   recentSection() {
     Column() {
       Row() {
-        Text('最近搜索')
+        Text($r('app.string.search_recent'))
           .fontSize(18)
           .fontWeight(FontWeight.Medium)
           .fontColor($r('app.color.app_text_primary'))
         Blank()
         if (this.recentSearches.length > 0) {
           if (this.isEditMode) {
-            // 编辑模式：垃圾桶按钮变为「清空 | 完成」
-            Row({ space: 20 }) {
-              Text('清空')
+            // 编辑模式：垃圾桶按钮变为「清空 | 完成」，清空为删除红色，两者间用竖分割线隔开
+            Row() {
+              Text($r('app.string.search_clear'))
                 .fontSize(14)
-                .fontColor($r('app.color.app_brand_blue'))
+                .fontColor('#E84040')
                 .onClick(() => {
                   this.confirmClearAll();
                 })
-              Text('完成')
+              Divider()
+                .vertical(true)
+                .height(14)
+                .strokeWidth(1)
+                .color('#33000000')
+                .margin({ left: 14, right: 14 })
+              Text($r('app.string.search_done'))
                 .fontSize(14)
                 .fontColor($r('app.color.app_text_primary'))
                 .onClick(() => {
                   this.exitEditMode();
                 })
             }
+            .alignItems(VerticalAlign.Center)
           } else {
             // 普通模式：垃圾桶按钮进入编辑模式
             SymbolGlyph($r('sys.symbol.trash'))
@@ -286,7 +345,7 @@ export struct SearchPage {
             .fontColor([$r('app.color.app_text_hint')])
             .opacity(0.5)
             .margin({ bottom: 12 })
-          Text('暂无搜索记录')
+          Text($r('app.string.search_no_history'))
             .fontSize(14)
             .fontColor($r('app.color.app_text_hint'))
         }
@@ -299,8 +358,8 @@ export struct SearchPage {
         // 同时当记录过多超出一屏时仍可滚动
         Scroll() {
           Flex({ direction: FlexDirection.Row, wrap: FlexWrap.Wrap, alignContent: FlexAlign.Start }) {
-            ForEach(this.recentSearches, (item: string, index: number) => {
-              this.recentPill(item, index)
+            ForEach(this.recentSearches, (item: string) => {
+              this.recentPill(item)
             }, (item: string) => item)
           }
           .width('100%')
@@ -329,11 +388,13 @@ export struct SearchPage {
           .fontColor($r('app.color.app_text_primary'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .width('100%')
         Text(record.artistName)
           .fontSize(13)
           .fontColor($r('app.color.app_text_secondary'))
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .width('100%')
       }
       .layoutWeight(1)
       .alignItems(HorizontalAlign.Start)
@@ -364,16 +425,17 @@ export struct SearchPage {
           .fontColor([$r('app.color.app_text_hint')])
           .opacity(0.5)
           .margin({ bottom: 12 })
-        Text('未找到相关记录')
+        Text($r('app.string.search_no_result'))
           .fontSize(15)
           .fontColor($r('app.color.app_text_hint'))
-        Text(`没有与"${this.keyword}"匹配的歌曲、歌手或BPM`)
+        Text($r('app.string.search_no_result_hint', this.keyword))
           .fontSize(13)
           .fontColor($r('app.color.app_text_hint'))
           .margin({ top: 8 })
           .textAlign(TextAlign.Center)
       }
       .width('100%')
+      .height('100%')
       .padding({ top: this.navBarTop + 40 })
       .alignItems(HorizontalAlign.Center)
       .backgroundColor($r('app.color.app_bg_primary'))

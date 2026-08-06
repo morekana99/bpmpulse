@@ -12,20 +12,6 @@
     "pages": "$profile:main_pages",
     "requestPermissions": [
       {
-        "name": "ohos.permission.ACCELEROMETER",
-        "reason": "$string:accelerometer_permission_reason"
-      },
-      {
-        "name": "ohos.permission.ACTIVITY_MOTION",
-        "reason": "$string:activity_motion_permission_reason",
-        "usedScene": {
-          "abilities": [
-            "EntryAbility"
-          ],
-          "when": "inuse"
-        }
-      },
-      {
         "name": "ohos.permission.DETECT_GESTURE",
         "reason": "$string:activity_motion_permission_reason",
         "usedScene": {

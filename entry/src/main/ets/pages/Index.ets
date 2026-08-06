@@ -14,19 +14,20 @@ struct TabBarItem {
   @StorageLink('currentTabIndex') currentTabIndex: number = 0;
   @StorageLink('isMultiSelectMode') isMultiSelectMode: boolean = false;
   @Prop idx: number = 0;
-  @Prop icon: string = '';
-  @Prop label: string = '';
-  @Prop multiIcon: string = '';
-  @Prop multiLabel: string = '';
+  @Prop icon: Resource = $r('sys.symbol.music_fill');
+  @Prop label: ResourceStr = '';
+  @Prop multiIcon: Resource = $r('sys.symbol.trash');
+  @Prop multiLabel: ResourceStr = '';
   multiAction?: () => void;
 
   build() {
     Column({ space: 2 }) {
       if (this.isMultiSelectMode) {
-        Text(this.multiIcon)
-          .fontSize(22)
-          .lineHeight(24)
-          .fontColor($r('app.color.app_text_primary'))
+        // 多选操作图标也用系统符号：SINGLE 渲染为扁平纯色，随深浅色适配
+        SymbolGlyph(this.multiIcon)
+          .fontSize(24)
+          .fontColor([$r('app.color.app_text_primary')])
+          .renderingStrategy(SymbolRenderingStrategy.SINGLE)
         Text(this.multiLabel)
           .fontSize(11)
           .lineHeight(14)
@@ -34,15 +35,18 @@ struct TabBarItem {
           .fontColor($r('app.color.app_text_primary'))
           .maxLines(1)
       } else {
-        Text(this.icon)
-          .fontSize(22)
-          .lineHeight(24)
-          .fontColor(this.idx === this.currentTabIndex ? $r('app.color.app_brand_blue') : $r('app.color.app_text_hint'))
+        // 使用系统符号图标（SymbolGlyph）：renderingStrategy(SINGLE) 渲染为扁平纯色矢量图标，
+        // 随深浅色自动适配；fontColor 传入颜色数组，选中时切换品牌蓝实现变色。
+        // 图标与下方文字在 Column 内均水平居中，共用同一中心轴保证对齐。
+        SymbolGlyph(this.icon)
+          .fontSize(24)
+          .fontColor([this.idx === this.currentTabIndex ? $r('app.color.app_brand_blue') : $r('app.color.app_text_primary')])
+          .renderingStrategy(SymbolRenderingStrategy.SINGLE)
         Text(this.label)
           .fontSize(11)
           .lineHeight(14)
           .fontWeight(this.idx === this.currentTabIndex ? FontWeight.Bold : FontWeight.Medium)
-          .fontColor(this.idx === this.currentTabIndex ? $r('app.color.app_brand_blue') : $r('app.color.app_text_hint'))
+          .fontColor(this.idx === this.currentTabIndex ? $r('app.color.app_brand_blue') : $r('app.color.app_text_primary'))
           .maxLines(1)
       }
     }
@@ -127,10 +131,10 @@ struct Index {
   bpmTabBar() {
     TabBarItem({
       idx: 0,
-      icon: '\u266A',
-      label: 'BPM',
-      multiIcon: '\u2296',
-      multiLabel: '删除',
+      icon: $r('sys.symbol.music_fill'),
+      label: $r('app.string.tab_bpm'),
+      multiIcon: $r('sys.symbol.trash'),
+      multiLabel: $r('app.string.dialog_delete'),
       multiAction: (): void => this.deleteSelectedRecords()
     })
   }
@@ -139,10 +143,10 @@ struct Index {
   recordTabBar() {
     TabBarItem({
       idx: 1,
-      icon: '\u2630',
-      label: '记录',
-      multiIcon: '\u2191',
-      multiLabel: '分享',
+      icon: $r('sys.symbol.heart_fill'),
+      label: $r('app.string.tab_record'),
+      multiIcon: $r('sys.symbol.arrowshape_turn_up_right'),
+      multiLabel: $r('app.string.share'),
       multiAction: (): Promise<void> => this.shareSelectedRecords()
     })
   }
@@ -161,18 +165,18 @@ struct Index {
     if (ids.length === 0) {
       return;
     }
-    AlertDialog.show({
-      title: '确认删除',
-      message: `确定要删除选中的 ${ids.length} 条记录吗？\n此操作不可恢复。`,
+    this.getUIContext().showAlertDialog({
+      title: $r('app.string.delete_confirm_title'),
+      message: $r('app.string.delete_confirm_msg', ids.length),
       autoCancel: true,
       alignment: DialogAlignment.Center,
       primaryButton: {
-        value: '取消',
+        value: $r('app.string.dialog_cancel'),
         fontColor: '#007DFF',
         action: () => {}
       },
       secondaryButton: {
-        value: '删除',
+        value: $r('app.string.dialog_delete'),
         fontColor: '#E84040',
         action: () => {
           DatabaseHelper.getInstance().deleteByIds(ids).then((rows: number) => {
@@ -180,14 +184,14 @@ struct Index {
             AppStorage.setOrCreate('multiSelectIds', [] as number[]);
             AppStorage.setOrCreate('recordsNeedRefresh', Date.now());
             try {
-              this.getUIContext().getPromptAction().showToast({ message: `已删除 ${rows} 条记录`, duration: 2000 });
+              this.getUIContext().getPromptAction().showToast({ message: $r('app.string.toast_deleted_count', rows), duration: 2000 });
             } catch (error) {
               // TODO: Implement error handling.
             }
           }).catch((err: Error) => {
             console.error('删除记录失败:', err.message, JSON.stringify(err));
             try {
-              this.getUIContext().getPromptAction().showToast({ message: '删除失败，请重试', duration: 2000 });
+              this.getUIContext().getPromptAction().showToast({ message: $r('app.string.toast_delete_failed'), duration: 2000 });
             } catch (error) {
               // TODO: Implement error handling.
             }
@@ -217,7 +221,7 @@ struct Index {
       text += '='.repeat(36) + '\n';
       text += `导出时间: ${new Date().toLocaleString()}\n`;
 
-      const context = getContext(this) as common.UIAbilityContext;
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
       const fileName = `BPM记录_${Date.now()}.txt`;
       const filePath = `${context.cacheDir}/${fileName}`;
       const file = fs.openSync(filePath, fs.OpenMode.CREATE | fs.OpenMode.TRUNC | fs.OpenMode.WRITE_ONLY);
@@ -225,11 +229,14 @@ struct Index {
       fs.closeSync(file);
 
       const uri = fileUri.getUriFromPath(filePath);
+      const shareTitle: string = context.resourceManager.getStringSync($r('app.string.share_sheet_title').id);
+      const descRes: Resource = selectedRecords.length === 1 ? $r('app.string.share_sheet_desc_one') : $r('app.string.share_sheet_desc_other');
+      const shareDesc: string = context.resourceManager.getStringSync(descRes.id, selectedRecords.length);
       const shareData: systemShare.SharedData = new systemShare.SharedData({
         utd: utd.UniformDataType.TEXT,
         uri: uri,
-        title: 'BPM记录',
-        description: `共 ${selectedRecords.length} 条BPM记录`
+        title: shareTitle,
+        description: shareDesc
       });
 
       const controller: systemShare.ShareController = new systemShare.ShareController(shareData);
@@ -243,7 +250,7 @@ struct Index {
     } catch (err) {
       console.error('分享失败:', JSON.stringify(err));
       try {
-        this.getUIContext().getPromptAction().showToast({ message: '分享失败', duration: 2000 });
+        this.getUIContext().getPromptAction().showToast({ message: $r('app.string.toast_share_failed'), duration: 2000 });
       } catch (error) {
         // TODO: Implement error handling.
       }
@@ -251,95 +258,97 @@ struct Index {
   }
 
   build() {
-    if (this.isSearching) {
-      // 进入搜索：搜索页从略微缩小+透明淡入放大呈现（精美页面过渡，参考华为音乐搜索）
-      SearchPage()
-        .transition(
-          TransitionEffect.opacity(0)
-            .combine(TransitionEffect.scale({ x: 0.96, y: 0.96 }))
-            .animation({ duration: 320, curve: Curve.Friction })
-        )
-    } else {
-    HdsNavigation() {
-      HdsTabs({ controller: this.tabsController, index: this.currentTabIndex }) {
-        TabContent() {
-          BpmPage({ scroller: this.scrollerForBpm })
-        }
-        .tabBar(this.bpmTabBar)
+    // Stack 常驻主树方案：主页面（含 HdsTabs 底栏）始终存在、不被销毁重建，
+    // 搜索页作为顶层覆盖层叠加。避免 HdsTabs 底栏 ADAPTIVE 材质在重建时重新采样背景引发闪烁。
+    Stack() {
+      // 底层：常驻主页面
+      HdsNavigation() {
+        HdsTabs({ controller: this.tabsController, index: this.currentTabIndex }) {
+          TabContent() {
+            BpmPage({ scroller: this.scrollerForBpm })
+          }
+          .tabBar(this.bpmTabBar)
 
-        TabContent() {
-          RecordPage({ scroller: this.scrollerForRecord })
+          TabContent() {
+            RecordPage({ scroller: this.scrollerForRecord })
+          }
+          .tabBar(this.recordTabBar)
         }
-        .tabBar(this.recordTabBar)
+        .barOverlap(true)
+        .barPosition(BarPosition.End)
+        .vertical(false)
+        .animationDuration(0)
+        .scrollable(false)
+        .onChange((index: number) => {
+          AppStorage.set('currentTabIndex', index);
+        })
+        .barFloatingStyle({
+          barBottomMargin: 28,
+          systemMaterialEffect: {
+            materialType: hdsMaterial.MaterialType.ADAPTIVE,
+            materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
+          },
+          barOpacity: 0.99,
+          lightColor: '#4CFFFFFF',
+          adaptToHandedness: true,
+          gradientMask: {
+            maskColor: '#00FFFFFF',
+            maskHeight: 92
+          }
+        })
       }
-      .barOverlap(true)
-      .barPosition(BarPosition.End)
-      .vertical(false)
-      .animationDuration(0)
-      .scrollable(false)
-      .onChange((index: number) => {
-        AppStorage.set('currentTabIndex', index);
-      })
-      .barFloatingStyle({
-        barBottomMargin: 28,
-        systemMaterialEffect: {
-          materialType: hdsMaterial.MaterialType.ADAPTIVE,
-          materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
-        },
-        barOpacity: 0.99,
-        lightColor: '#4CFFFFFF',
-        adaptToHandedness: true,
-        gradientMask: {
-          maskColor: '#00FFFFFF',
-          maskHeight: 92
-        }
-      })
-    }
-    .mode(NavigationMode.Stack)
-    .titleBar({
-      content: {
-        title: this.isSearching
-          ? { mainTitle: '' }
-          : (this.currentTabIndex === 0
-          ? { mainTitle: '' }
-          : { mainTitle: !this.isMultiSelectMode ? '歌曲信息' : (this.multiSelectIds.length === 0 ? '未选择' : `已选择${this.multiSelectIds.length}项`) }),
-        menu: this.isSearching ? undefined : (this.currentTabIndex === 1 ? {
-          value: [
-            {
-              content: {
-                label: this.isMultiSelectMode ? (this.isAllSelected() ? '取消全选' : '全选') : '多选',
-                type: TextStyleMode.NORMAL,
-                action: (): void => { this.multiSelectAction(); }
+      .mode(NavigationMode.Stack)
+      .titleBar({
+        content: {
+          title: this.currentTabIndex === 0
+            ? { mainTitle: '' }
+            : { mainTitle: !this.isMultiSelectMode ? $r('app.string.title_song_info') : (this.multiSelectIds.length === 0 ? $r('app.string.multiselect_none') : $r('app.string.multiselect_selected', this.multiSelectIds.length)) },
+          menu: this.currentTabIndex === 1 ? {
+            value: [
+              {
+                content: {
+                  label: this.isMultiSelectMode ? (this.isAllSelected() ? $r('app.string.multiselect_deselect_all') : $r('app.string.multiselect_select_all')) : $r('app.string.multiselect_multi'),
+                  type: TextStyleMode.NORMAL,
+                  action: (): void => { this.multiSelectAction(); }
+                }
               }
-            }
-          ],
-          maxCount: 1
-        } : undefined)
-      },
-      style: {
-        scrollEffectOpts: {
-          enableScrollEffect: true,
-          scrollEffectType: ScrollEffectType.GRADIENT_BLUR
+            ],
+            maxCount: 1
+          } : undefined
         },
-        systemMaterialEffect: {
-          materialType: hdsMaterial.MaterialType.ADAPTIVE,
-          materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
-        }
-      },
-      avoidLayoutSafeArea: true,
-      enableComponentSafeArea: false
-    })
-    .titleMode(HdsNavigationTitleMode.MINI)
-    .bindToScrollable([this.scrollerForBpm, this.scrollerForRecord])
-    .hideBackButton(!(this.isMultiSelectMode || this.isSearching))
+        style: {
+          scrollEffectOpts: {
+            enableScrollEffect: true,
+            scrollEffectType: ScrollEffectType.GRADIENT_BLUR
+          },
+          systemMaterialEffect: {
+            materialType: hdsMaterial.MaterialType.ADAPTIVE,
+            materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
+          }
+        },
+        avoidLayoutSafeArea: true,
+        enableComponentSafeArea: false
+      })
+      .titleMode(HdsNavigationTitleMode.MINI)
+      .bindToScrollable([this.scrollerForBpm, this.scrollerForRecord])
+      .hideBackButton(!(this.isMultiSelectMode || this.isSearching))
       .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
       .width('100%')
       .height('100%')
-      // 主页面在进入/退出搜索时淡出淡入，与搜索页过渡呼应
-      .transition(
-        TransitionEffect.opacity(0)
-          .animation({ duration: 320, curve: Curve.Friction })
-      )
+      // 搜索打开时底层不响应触摸，避免点击穿透到被覆盖的主页面
+      .hitTestBehavior(this.isSearching ? HitTestMode.None : HitTestMode.Default)
+
+      // 顶层：搜索覆盖层（仅搜索时显示，进入淡入放大、退出反向淡出缩小，主页面全程不销毁）
+      if (this.isSearching) {
+        SearchPage()
+          .transition(
+            TransitionEffect.opacity(0)
+              .combine(TransitionEffect.scale({ x: 0.96, y: 0.96 }))
+              .animation({ duration: 320, curve: Curve.Friction })
+          )
+      }
     }
+    .width('100%')
+    .height('100%')
   }
 }

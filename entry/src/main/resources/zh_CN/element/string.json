@@ -2,87 +2,87 @@
   "string": [
     {
       "name": "module_desc",
-      "value": "BPM Pulse module description"
+      "value": "BPM Pulse 模块描述"
     },
     {
       "name": "EntryAbility_desc",
-      "value": "BPM Pulse entry ability"
+      "value": "BPM Pulse 入口能力"
     },
     {
       "name": "activity_motion_permission_reason",
-      "value": "Used to detect grip gesture and adjust button position"
+      "value": "用于识别握持手势，智能调整按钮位置"
     },
     {
       "name": "vibrate_permission_reason",
-      "value": "Used for haptic feedback when tapping the beat"
+      "value": "用于点击节拍时的触觉反馈"
     },
     {
       "name": "search_recent",
-      "value": "Recent Searches"
+      "value": "最近搜索"
     },
     {
       "name": "search_clear",
-      "value": "Clear"
+      "value": "清空"
     },
     {
       "name": "search_done",
-      "value": "Done"
+      "value": "完成"
     },
     {
       "name": "search_no_history",
-      "value": "No search history"
+      "value": "暂无搜索记录"
     },
     {
       "name": "search_no_result",
-      "value": "No matching results"
+      "value": "未找到相关记录"
     },
     {
       "name": "search_no_result_hint",
-      "value": "No songs, artists or BPM match \"%1$s\""
+      "value": "没有与\"%1$s\"匹配的歌曲、歌手或BPM"
     },
     {
       "name": "search_placeholder",
-      "value": "Search songs, artists or BPM"
+      "value": "搜索歌曲、歌手或BPM"
     },
     {
       "name": "search_cleared_toast",
-      "value": "Search history cleared"
+      "value": "已清空搜索记录"
     },
     {
       "name": "search_clear_title",
-      "value": "Clear search history"
+      "value": "清空搜索记录"
     },
     {
       "name": "search_clear_msg",
-      "value": "Clear all recent searches? This cannot be undone."
+      "value": "确定要清空全部最近搜索记录吗？此操作不可恢复。"
     },
     {
       "name": "dialog_cancel",
-      "value": "Cancel"
+      "value": "取消"
     },
     {
       "name": "dialog_save",
-      "value": "Save"
+      "value": "保存"
     },
     {
       "name": "dialog_delete",
-      "value": "Delete"
+      "value": "删除"
     },
     {
       "name": "record_no_data",
-      "value": "No records yet"
+      "value": "暂无记录"
     },
     {
       "name": "record_empty_hint",
-      "value": "Tap the floating button on the BPM page to save"
+      "value": "在BPM页面点击浮动按钮保存记录"
     },
     {
       "name": "record_tap_count",
-      "value": "Tapped %1$d times"
+      "value": "点击 %1$d次"
     },
     {
       "name": "record_avg_interval",
-      "value": "Interval %1$s s"
+      "value": "间隔 %1$s秒"
     },
     {
       "name": "tab_bpm",
@@ -90,99 +90,99 @@
     },
     {
       "name": "tab_record",
-      "value": "Records"
+      "value": "记录"
     },
     {
       "name": "title_song_info",
-      "value": "Song Info"
+      "value": "歌曲信息"
     },
     {
       "name": "multiselect_none",
-      "value": "None Selected"
+      "value": "未选择"
     },
     {
       "name": "multiselect_selected",
-      "value": "Selected %1$d"
+      "value": "已选择%1$d项"
     },
     {
       "name": "multiselect_select_all",
-      "value": "Select All"
+      "value": "全选"
     },
     {
       "name": "multiselect_deselect_all",
-      "value": "Deselect All"
+      "value": "取消全选"
     },
     {
       "name": "multiselect_multi",
-      "value": "Select"
+      "value": "多选"
     },
     {
       "name": "delete_confirm_title",
-      "value": "Confirm Delete"
+      "value": "确认删除"
     },
     {
       "name": "delete_confirm_msg",
-      "value": "Delete %1$d selected record(s)?\nThis cannot be undone."
+      "value": "确定要删除选中的 %1$d 条记录吗？\n此操作不可恢复。"
     },
     {
       "name": "share",
-      "value": "Share"
+      "value": "分享"
     },
     {
       "name": "share_sheet_title",
-      "value": "BPM Records"
+      "value": "BPM记录"
     },
     {
       "name": "share_sheet_desc_one",
-      "value": "%1$d BPM record"
+      "value": "共 %1$d 条BPM记录"
     },
     {
       "name": "share_sheet_desc_other",
-      "value": "%1$d BPM records"
+      "value": "共 %1$d 条BPM记录"
     },
     {
       "name": "song_name_placeholder",
-      "value": "Song name"
+      "value": "歌曲名称"
     },
     {
       "name": "artist_placeholder",
-      "value": "Artist"
+      "value": "歌手"
     },
     {
       "name": "bpm_tap_count_label",
-      "value": "Taps"
+      "value": "点击次数"
     },
     {
       "name": "bpm_avg_interval_label",
-      "value": "Avg Interval"
+      "value": "平均间隔"
     },
     {
       "name": "bpm_avg_interval_value",
-      "value": "%1$s s"
+      "value": "%1$s 秒"
     },
     {
       "name": "bpm_tap_hint",
-      "value": "Tap anywhere to the beat"
+      "value": "点击屏幕任意位置，跟随音乐节奏点击"
     },
     {
       "name": "bpm_longpress_hint",
-      "value": "Long press to reset"
+      "value": "长按屏幕可以重置数据"
     },
     {
       "name": "bpm_save_info",
-      "value": "Save song info"
+      "value": "记录歌曲信息"
     },
     {
       "name": "toast_delete_failed",
-      "value": "Delete failed, please retry"
+      "value": "删除失败，请重试"
     },
     {
       "name": "toast_deleted_count",
-      "value": "Deleted %1$d record(s)"
+      "value": "已删除 %1$d 条记录"
     },
     {
       "name": "toast_share_failed",
-      "value": "Share failed"
+      "value": "分享失败"
     }
   ]
 }

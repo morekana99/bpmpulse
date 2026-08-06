@@ -5,26 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "C:/Users/MoreKANA/.ohos/config/default_bpmpulse_dFlishT9T6IcOUf073txF_hrSYfPKn28lYvqPZWS4XQ=.cer",
+          "certpath": "C:\\Users\\Whmat\\.ohos\\config\\default_bpmpulse_rUHdq4wccUsx-R4sNvHQS-wiboWHTAYccDH26h5f6RA=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001AC7B06310AAF49C4017A3F9478FD1B206ECF4B22B2D22DCE6D326956AB5BBBD86909160B03F87",
-          "profile": "C:/Users/MoreKANA/.ohos/config/default_bpmpulse_dFlishT9T6IcOUf073txF_hrSYfPKn28lYvqPZWS4XQ=.p7b",
+          "keyPassword": "0000001B8DDEAD75F4D98E9B91A5383D06A40A5C69824572576C271F289BC9F5B437A211AD7BAEB0AAE3E4",
+          "profile": "C:\\Users\\Whmat\\.ohos\\config\\default_bpmpulse_rUHdq4wccUsx-R4sNvHQS-wiboWHTAYccDH26h5f6RA=.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "C:/Users/MoreKANA/.ohos/config/default_bpmpulse_dFlishT9T6IcOUf073txF_hrSYfPKn28lYvqPZWS4XQ=.p12",
-          "storePassword": "0000001ABD32FBF1B70640F565D6F31004EAD96E165F1305D165B4D763A55B6D3353688F465CF08E2675"
-        }
-      },
-      {
-        "name": "release",
-        "type": "HarmonyOS",
-        "material": {
-          "certpath": "C:/Data/HMProjects/0-release files/bpmpulse/release.cer",
-          "keyAlias": "releaseKey",
-          "keyPassword": "00000019345A977D0183A9855C4F1380929457EC6F9775A9B191D4282546C5F22311B991531BAFE2C7",
-          "profile": "C:/Data/HMProjects/0-release files/bpmpulse/bpmpulseRelease.p7b",
-          "signAlg": "SHA256withECDSA",
-          "storeFile": "C:/Data/HMProjects/0-release files/release.p12",
-          "storePassword": "000000196C2E5DA2D4DC19EB7D4019292058B175482EA6CA9CB5113B7C54529A214CF30F969194396B"
+          "storeFile": "C:\\Users\\Whmat\\.ohos\\config\\default_bpmpulse_rUHdq4wccUsx-R4sNvHQS-wiboWHTAYccDH26h5f6RA=.p12",
+          "storePassword": "0000001BD4BEB60345C4833D236C59F7790C7AE3F3DAB6D5D276EB9414D178BA02ADE7BA7D7493CCE7588C"
         }
       }
     ],
@@ -32,8 +19,8 @@
       {
         "name": "default",
         "signingConfig": "default",
-        "targetSdkVersion": "6.1.1(24)",
-        "compatibleSdkVersion": "6.1.1(24)",
+        "targetSdkVersion": "26.0.0",
+        "compatibleSdkVersion": "26.0.0",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
           "strictMode": {

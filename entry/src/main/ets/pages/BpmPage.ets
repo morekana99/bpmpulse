@@ -317,21 +317,22 @@ export struct BpmPage {
           })
       )
 
-      // 圆形浮动按钮 — 沉浸光感
+      // 圆形浮动按钮 — HDS 沉浸光感 + 主题蓝色 + 图形加号
       Row() {
         Column() {
-          Text('+')
+          SymbolGlyph($r('sys.symbol.plus'))
             .fontSize(36)
-            .fontWeight(FontWeight.Lighter)
-            .fontColor($r('app.color.app_text_primary'))
+            .fontWeight(FontWeight.Bold)
+            .fontColor([$r('app.color.app_brand_blue')])
+            .renderingStrategy(SymbolRenderingStrategy.SINGLE)
         }
         .width(64)
         .height(64)
         .borderRadius(32)
         .justifyContent(FlexAlign.Center)
         .alignItems(HorizontalAlign.Center)
-        // HDS 沉浸光感：挂载官方 systemMaterial 沉浸材质（THICK 厚样式，圆形按钮更突出），
-        // 背景透明以透出材质，由系统统一接管背景、边框与阴影，无需手写模糊。
+        // 保留 HDS 沉浸材质（THICK 厚样式），背景透明以透出材质，
+        // 加号图形使用主题蓝色呈现。
         .backgroundColor(Color.Transparent)
         .systemMaterial(new uiMaterial.ImmersiveMaterial({
           style: uiMaterial.ImmersiveStyle.THICK

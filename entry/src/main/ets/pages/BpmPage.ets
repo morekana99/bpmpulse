@@ -1,5 +1,4 @@
 import { motion } from '@kit.MultimodalAwarenessKit';
-import { uiMaterial } from '@kit.ArkUI';
 import { vibrator } from '@kit.SensorServiceKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { SongRecord } from '../models/SongRecord';
@@ -331,12 +330,12 @@ export struct BpmPage {
         .borderRadius(32)
         .justifyContent(FlexAlign.Center)
         .alignItems(HorizontalAlign.Center)
-        // 保留 HDS 沉浸材质（THICK 厚样式），背景透明以透出材质，
-        // 加号图形使用主题蓝色呈现。
-        .backgroundColor(Color.Transparent)
-        .systemMaterial(new uiMaterial.ImmersiveMaterial({
-          style: uiMaterial.ImmersiveStyle.THICK
-        }))
+        // API 26 沉浸光感生效范围限制：systemMaterial 仅在 Navigation 标题栏 /
+        // 底部 TabBar / 弹窗类组件生效。悬浮加号按钮位于 TabContent 内容区，超出生效范围，
+        // 故改用 backgroundBlurStyle 实现液态玻璃磨砂质感（系统统一接管模糊与深浅色自适应），
+        // 加号图形仍使用主题蓝色呈现。
+        .backgroundBlurStyle(BlurStyle.Regular)
+        .backgroundColor($r('app.color.app_glass_bg'))
         .onClick(() => {
           this.openRecordDialog();
         })
@@ -445,14 +444,14 @@ struct BpmRecordDialog {
       .margin({ bottom: 24 })
     }
     .width('82%')
-    // HDS 沉浸材质：弹窗整体使用系统 material 模糊背景，透出底层内容，
-    // 仅输入框与按钮区域保持纯色不透明（见上方 TextInput 与按钮 Row）。
-    .backgroundColor(Color.Transparent)
-    .systemMaterial(new uiMaterial.ImmersiveMaterial({
-      style: uiMaterial.ImmersiveStyle.THICK
-    }))
+    // 真正的系统材质（systemMaterial，需 customStyle:false）在此环境渲染极淡、无可见边框，观感接近透明；
+    // 故弹窗沿用与加号/搜索栏一致的 HDS 模糊玻璃（backgroundBlurStyle）+ 半透明底色，并显式加一道边框，
+    // 形成清晰可见的液态玻璃卡片，深浅模式均成立。
+    .backgroundColor($r('app.color.app_glass_bg'))
+    .border({ width: 1, color: $r('app.color.app_glass_border') })
     .borderRadius(16)
     .shadow({ radius: 20, color: '#40000000', offsetX: 0, offsetY: 4 })
+    .backgroundBlurStyle(BlurStyle.Thick)
     .alignItems(HorizontalAlign.Center)
   }
 }

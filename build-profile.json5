@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "C:\\Users\\Whmat\\.ohos\\config\\default_bpmpulse_rUHdq4wccUsx-R4sNvHQS-wiboWHTAYccDH26h5f6RA=.cer",
+          "certpath": "C:\\Users\\MoreKANA\\.ohos\\config\\default_bpmpulse_dFlishT9T6IcOUf073txF_hrSYfPKn28lYvqPZWS4XQ=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001B8DDEAD75F4D98E9B91A5383D06A40A5C69824572576C271F289BC9F5B437A211AD7BAEB0AAE3E4",
-          "profile": "C:\\Users\\Whmat\\.ohos\\config\\default_bpmpulse_rUHdq4wccUsx-R4sNvHQS-wiboWHTAYccDH26h5f6RA=.p7b",
+          "keyPassword": "0000001BC1F9A317A0B22B6A172DACB364A0E44824EB015696A0E993D230ED02E77FFBA47B46B9AC87CA36",
+          "profile": "C:\\Users\\MoreKANA\\.ohos\\config\\default_bpmpulse_dFlishT9T6IcOUf073txF_hrSYfPKn28lYvqPZWS4XQ=.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "C:\\Users\\Whmat\\.ohos\\config\\default_bpmpulse_rUHdq4wccUsx-R4sNvHQS-wiboWHTAYccDH26h5f6RA=.p12",
-          "storePassword": "0000001BD4BEB60345C4833D236C59F7790C7AE3F3DAB6D5D276EB9414D178BA02ADE7BA7D7493CCE7588C"
+          "storeFile": "C:\\Users\\MoreKANA\\.ohos\\config\\default_bpmpulse_dFlishT9T6IcOUf073txF_hrSYfPKn28lYvqPZWS4XQ=.p12",
+          "storePassword": "0000001BF83CFD8BFF8201D0CF8CE4F75D37A05EC55AC71AA8850E94E3BB4FCB645541A90CB92F55528742"
         }
       }
     ],

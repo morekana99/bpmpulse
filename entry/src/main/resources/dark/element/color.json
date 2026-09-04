@@ -27,6 +27,10 @@
     {
       "name": "app_brand_blue",
       "value": "#007DFF"
+    },
+    {
+      "name": "app_glass_bg",
+      "value": "#4D242424"
     }
   ]
 }

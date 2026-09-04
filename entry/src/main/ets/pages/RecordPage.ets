@@ -1,4 +1,3 @@
-import { uiMaterial } from '@kit.ArkUI';
 import { SongRecord } from '../models/SongRecord';
 import { DatabaseHelper } from '../database/DatabaseHelper';
 import { vibrator } from '@kit.SensorServiceKit';
@@ -92,13 +91,12 @@ export struct RecordPage {
       .height(40)
       .padding({ left: 16, right: 16 })
       .alignItems(VerticalAlign.Center)
-      // HDS 沉浸光感：挂载官方 systemMaterial 沉浸材质（THIN 薄样式，官方指定用于搜索框场景），
-      // 背景透明以透出材质，由系统统一接管背景、边框与阴影，无需手写模糊。
-      .backgroundColor(Color.Transparent)
+      // API 26 沉浸光感生效范围限制：systemMaterial 仅在 Navigation 标题栏 /
+      // 底部 TabBar / 弹窗类组件生效。搜索入口栏位于 TabContent 内容区，超出生效范围，
+      // 故改用 backgroundBlurStyle（THIN 薄样式等效）实现液态玻璃磨砂质感，系统统一接管模糊与深浅色自适应。
+      .backgroundBlurStyle(BlurStyle.Thin)
+      .backgroundColor($r('app.color.app_glass_bg'))
       .borderRadius(22)
-      .systemMaterial(new uiMaterial.ImmersiveMaterial({
-        style: uiMaterial.ImmersiveStyle.THIN
-      }))
     }
     .width('100%')
     .padding({ left: 16, right: 16 })

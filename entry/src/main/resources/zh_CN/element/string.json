@@ -69,6 +69,10 @@
       "value": "删除"
     },
     {
+      "name": "dialog_confirm",
+      "value": "确定"
+    },
+    {
       "name": "record_no_data",
       "value": "暂无记录"
     },
@@ -89,8 +93,100 @@
       "value": "BPM"
     },
     {
-      "name": "tab_record",
-      "value": "记录"
+      "name": "tab_library",
+      "value": "曲库"
+    },
+    {
+      "name": "tab_setlist",
+      "value": "歌单"
+    },
+    {
+      "name": "tab_tools",
+      "value": "工具"
+    },
+    {
+      "name": "tool_section_pitch",
+      "value": "速度微调"
+    },
+    {
+      "name": "tool_section_key",
+      "value": "调性兼容"
+    },
+    {
+      "name": "tool_section_conv",
+      "value": "换算（基于输入 BPM）"
+    },
+    {
+      "name": "tool_section_bpm",
+      "value": "BPM 换算与微调"
+    },
+    {
+      "name": "tool_bpm_input",
+      "value": "BPM"
+    },
+    {
+      "name": "tool_pitch",
+      "value": "音高 %s"
+    },
+    {
+      "name": "tool_pitch_reset",
+      "value": "归零"
+    },
+    {
+      "name": "tool_pitch_semitones",
+      "value": "音高随之变化 %1$s 个半音（%2$d 音分）"
+    },
+    {
+      "name": "tool_target_label",
+      "value": "反向计算：接到目标 BPM"
+    },
+    {
+      "name": "tool_target_bpm",
+      "value": "目标 BPM"
+    },
+    {
+      "name": "tool_target_need",
+      "value": "需拨"
+    },
+    {
+      "name": "tool_target_apply",
+      "value": "应用到滑条 %1$s"
+    },
+    {
+      "name": "tool_target_range",
+      "value": "超出滑条可拨范围（±12），需用设备变速杆"
+    },
+    {
+      "name": "tool_pick_key",
+      "value": "选择一个调性查看可混音的调性"
+    },
+    {
+      "name": "tool_compat_with",
+      "value": "与 %s（%s）兼容"
+    },
+    {
+      "name": "tool_bpm_label",
+      "value": "速度"
+    },
+    {
+      "name": "tool_per_beat_sec",
+      "value": "每拍时长（秒）"
+    },
+    {
+      "name": "tool_per_beat_ms",
+      "value": "每拍时长（毫秒）"
+    },
+    {
+      "name": "title_library",
+      "value": "曲库"
+    },
+    {
+      "name": "title_setlist",
+      "value": "歌单"
+    },
+    {
+      "name": "title_tools",
+      "value": "工具"
     },
     {
       "name": "title_song_info",
@@ -166,7 +262,7 @@
     },
     {
       "name": "bpm_longpress_hint",
-      "value": "长按屏幕可以重置数据"
+      "value": "长按屏幕重置数据"
     },
     {
       "name": "bpm_save_info",
@@ -183,6 +279,590 @@
     {
       "name": "toast_share_failed",
       "value": "分享失败"
+    },
+    {
+      "name": "field_bpm",
+      "value": "BPM"
+    },
+    {
+      "name": "field_key",
+      "value": "调性"
+    },
+    {
+      "name": "field_genre",
+      "value": "风格"
+    },
+    {
+      "name": "field_energy",
+      "value": "能量"
+    },
+    {
+      "name": "field_duration",
+      "value": "时长"
+    },
+    {
+      "name": "field_note",
+      "value": "备注"
+    },
+    {
+      "name": "field_unset",
+      "value": "未设置"
+    },
+    {
+      "name": "field_section_meta",
+      "value": "DJ 信息（选填）"
+    },
+    {
+      "name": "duration_placeholder",
+      "value": "时长，例如 3:45"
+    },
+    {
+      "name": "note_placeholder",
+      "value": "切入点、混音提示……"
+    },
+    {
+      "name": "genre_placeholder",
+      "value": "风格"
+    },
+    {
+      "name": "song_edit_title",
+      "value": "编辑曲目"
+    },
+    {
+      "name": "toast_saved",
+      "value": "已保存"
+    },
+    {
+      "name": "toast_updated",
+      "value": "已更新"
+    },
+    {
+      "name": "toast_invalid_duration",
+      "value": "时长请按 分:秒 填写"
+    },
+    {
+      "name": "library_count",
+      "value": "共 %1$d 首"
+    },
+    {
+      "name": "library_count_bpm",
+      "value": "共 %1$d 首 · 含 BPM %2$d 附近"
+    },
+    {
+      "name": "library_sort_recent",
+      "value": "最近"
+    },
+    {
+      "name": "library_sort_bpm",
+      "value": "BPM"
+    },
+    {
+      "name": "library_sort_key",
+      "value": "调性"
+    },
+    {
+      "name": "library_filter_all",
+      "value": "全部"
+    },
+    {
+      "name": "library_no_match",
+      "value": "没有符合筛选条件的曲目"
+    },
+    {
+      "name": "library_no_match_hint",
+      "value": "切回「全部」查看所有曲目"
+    },
+    {
+      "name": "action_edit",
+      "value": "编辑"
+    },
+    {
+      "name": "action_add_to_set",
+      "value": "加入歌单"
+    },
+    {
+      "name": "action_export",
+      "value": "导出"
+    },
+    {
+      "name": "backup_section_title",
+      "value": "数据管理"
+    },
+    {
+      "name": "backup_hint",
+      "value": "JSON 备份包含全部曲目与歌单，可用于换机或恢复。导入时歌单会作为新歌单创建，不会覆盖现有歌单。"
+    },
+    {
+      "name": "action_export_backup",
+      "value": "导出备份"
+    },
+    {
+      "name": "action_import_backup",
+      "value": "导入备份"
+    },
+    {
+      "name": "backup_export_title",
+      "value": "BPM Pulse 备份"
+    },
+    {
+      "name": "backup_export_desc",
+      "value": "含 %1$d 首曲目 · %2$d 个歌单"
+    },
+    {
+      "name": "import_preview_title",
+      "value": "导入预览"
+    },
+    {
+      "name": "import_preview_records_label",
+      "value": "曲目"
+    },
+    {
+      "name": "import_preview_records",
+      "value": "共 %1$d 条（新增 %2$d · 重复 %3$d）"
+    },
+    {
+      "name": "import_preview_setlists_label",
+      "value": "歌单"
+    },
+    {
+      "name": "import_preview_setlists",
+      "value": "%1$d 个 · 共 %2$d 首曲目"
+    },
+    {
+      "name": "import_preview_invalid_label",
+      "value": "无效曲目"
+    },
+    {
+      "name": "import_preview_invalid",
+      "value": "%1$d 条已忽略"
+    },
+    {
+      "name": "action_import",
+      "value": "导入"
+    },
+    {
+      "name": "import_skip_duplicates",
+      "value": "跳过重复曲目"
+    },
+    {
+      "name": "import_skip_duplicates_hint",
+      "value": "按「歌名 + 歌手」判重；关闭后重复曲目也会作为新记录导入"
+    },
+    {
+      "name": "import_setlist_hint",
+      "value": "歌单将作为新歌单导入，重名会自动加序号"
+    },
+    {
+      "name": "toast_import_done",
+      "value": "已导入 %1$d 首曲目 · %2$d 个歌单"
+    },
+    {
+      "name": "toast_import_empty",
+      "value": "备份文件中没有可导入的数据"
+    },
+    {
+      "name": "toast_import_failed",
+      "value": "导入失败，请选择本应用导出的 JSON 备份文件"
+    },
+    {
+      "name": "action_remove",
+      "value": "移除"
+    },
+    {
+      "name": "action_move_up",
+      "value": "上移"
+    },
+    {
+      "name": "action_move_down",
+      "value": "下移"
+    },
+    {
+      "name": "action_move_top",
+      "value": "移到首位"
+    },
+    {
+      "name": "action_new",
+      "value": "新建"
+    },
+    {
+      "name": "action_select",
+      "value": "选择"
+    },
+    {
+      "name": "setlist_new",
+      "value": "新建歌单"
+    },
+    {
+      "name": "setlist_name_placeholder",
+      "value": "歌单名称"
+    },
+    {
+      "name": "setlist_empty",
+      "value": "还没有歌单"
+    },
+    {
+      "name": "setlist_empty_hint",
+      "value": "点击右上角「新建」，把 BPM 与调性相近的歌收进同一个 Set"
+    },
+    {
+      "name": "setlist_picker_subtitle",
+      "value": "已选 %1$d 首，选择要加入的歌单"
+    },
+    {
+      "name": "setlist_picker_search_placeholder",
+      "value": "搜索歌单"
+    },
+    {
+      "name": "setlist_picker_empty_hint",
+      "value": "新建一个歌单，把这些歌放进去"
+    },
+    {
+      "name": "setlist_picker_no_match",
+      "value": "没有匹配的歌单"
+    },
+    {
+      "name": "setlist_rename",
+      "value": "重命名"
+    },
+    {
+      "name": "setlist_duplicate",
+      "value": "复制歌单"
+    },
+    {
+      "name": "action_share",
+      "value": "分享"
+    },
+    {
+      "name": "setlist_clear_tracks",
+      "value": "清空曲目"
+    },
+    {
+      "name": "setlist_delete",
+      "value": "删除歌单"
+    },
+    {
+      "name": "toast_setlist_copied",
+      "value": "已复制歌单"
+    },
+    {
+      "name": "setlist_delete_title",
+      "value": "删除歌单"
+    },
+    {
+      "name": "setlist_delete_msg",
+      "value": "确定删除歌单「%1$s」吗？曲目仍会保留在曲库中。"
+    },
+    {
+      "name": "setlist_track_count",
+      "value": "%1$d 首"
+    },
+    {
+      "name": "setlist_bpm_range",
+      "value": "BPM %1$d-%2$d"
+    },
+    {
+      "name": "setlist_bpm_single",
+      "value": "BPM %1$d"
+    },
+    {
+      "name": "setlist_avg_bpm",
+      "value": "均值 %1$d"
+    },
+    {
+      "name": "setlist_total_time",
+      "value": "总时长 %1$s"
+    },
+    {
+      "name": "setlist_no_tracks",
+      "value": "这个歌单还没有曲目"
+    },
+    {
+      "name": "setlist_no_tracks_hint",
+      "value": "点击「添加曲目」从曲库中挑选"
+    },
+    {
+      "name": "setlist_add_tracks",
+      "value": "添加曲目"
+    },
+    {
+      "name": "setlist_sort",
+      "value": "排序"
+    },
+    {
+      "name": "setlist_sort_manual",
+      "value": "手动排序"
+    },
+    {
+      "name": "setlist_reorder_start",
+      "value": "手动排序"
+    },
+    {
+      "name": "setlist_reorder_hint",
+      "value": "按住左侧图标上下拖动可换位"
+    },
+    {
+      "name": "setlist_remove_from",
+      "value": "从歌单中删除"
+    },
+    {
+      "name": "toast_already_in_setlist",
+      "value": "该曲目已在目标歌单中"
+    },
+    {
+      "name": "setlist_remove_selected",
+      "value": "移除 %1$d"
+    },
+    {
+      "name": "setlist_remove_msg",
+      "value": "确定从歌单中移除选中的 %1$d 首曲目？"
+    },
+    {
+      "name": "action_done",
+      "value": "完成"
+    },
+    {
+      "name": "toast_removed_tracks",
+      "value": "已移除 %1$d 首曲目"
+    },
+    {
+      "name": "setlist_smart_sort",
+      "value": "智能排序"
+    },
+    {
+      "name": "setlist_bpm_asc",
+      "value": "BPM 升序"
+    },
+    {
+      "name": "setlist_bpm_desc",
+      "value": "BPM 降序"
+    },
+    {
+      "name": "setlist_clear",
+      "value": "清空"
+    },
+    {
+      "name": "setlist_clear_msg",
+      "value": "确定清空歌单中的全部曲目吗？"
+    },
+    {
+      "name": "setlist_curve_title",
+      "value": "BPM 曲线"
+    },
+    {
+      "name": "setlist_export_title",
+      "value": "歌单"
+    },
+    {
+      "name": "setlist_share_desc_one",
+      "value": "共 %1$d 首曲目的歌单"
+    },
+    {
+      "name": "setlist_share_desc_other",
+      "value": "共 %1$d 首曲目的歌单"
+    },
+    {
+      "name": "stat_tracks",
+      "value": "曲目"
+    },
+    {
+      "name": "stat_duration",
+      "value": "时长"
+    },
+    {
+      "name": "stat_bpm_range",
+      "value": "BPM 区间"
+    },
+    {
+      "name": "stat_avg_energy",
+      "value": "平均能量"
+    },
+    {
+      "name": "harmony_same",
+      "value": "同调"
+    },
+    {
+      "name": "harmony_perfect",
+      "value": "和声"
+    },
+    {
+      "name": "harmony_dramatic",
+      "value": "转调"
+    },
+    {
+      "name": "harmony_clash",
+      "value": "冲突"
+    },
+    {
+      "name": "harmony_unknown",
+      "value": "未设调性"
+    },
+    {
+      "name": "trans_delta",
+      "value": "%1$s%2$d"
+    },
+    {
+      "name": "trans_plus",
+      "value": "+"
+    },
+    {
+      "name": "trans_minus",
+      "value": "-"
+    },
+    {
+      "name": "picker_title",
+      "value": "选择曲目"
+    },
+    {
+      "name": "picker_filter_all",
+      "value": "全部"
+    },
+    {
+      "name": "picker_filter_bpm",
+      "value": "BPM 相近"
+    },
+    {
+      "name": "picker_filter_key",
+      "value": "调性兼容"
+    },
+    {
+      "name": "picker_anchor",
+      "value": "接续 %1$d BPM"
+    },
+    {
+      "name": "picker_anchor_key",
+      "value": "接续 %1$d BPM · %2$s"
+    },
+    {
+      "name": "picker_anchor_empty",
+      "value": "任意选一首作为 Set 开场"
+    },
+    {
+      "name": "picker_confirm",
+      "value": "添加 %1$d 首"
+    },
+    {
+      "name": "picker_empty",
+      "value": "暂无可选曲目"
+    },
+    {
+      "name": "picker_empty_hint",
+      "value": "先到 BPM 页面测速并保存几首歌"
+    },
+    {
+      "name": "picker_search_placeholder",
+      "value": "搜索曲库"
+    },
+    {
+      "name": "toast_added_tracks",
+      "value": "已添加 %1$d 首"
+    },
+    {
+      "name": "toast_no_selection",
+      "value": "请先选择曲目"
+    },
+    {
+      "name": "toast_sorted",
+      "value": "已按最顺滑的路径重排"
+    },
+    {
+      "name": "toast_name_required",
+      "value": "请输入歌单名称"
+    },
+    {
+      "name": "tools_converter",
+      "value": "BPM 换算"
+    },
+    {
+      "name": "tools_bpm_input",
+      "value": "输入 BPM"
+    },
+    {
+      "name": "tools_half",
+      "value": "半速"
+    },
+    {
+      "name": "tools_double",
+      "value": "倍速"
+    },
+    {
+      "name": "tools_beat_ms",
+      "value": "每拍"
+    },
+    {
+      "name": "tools_bar",
+      "value": "每小节(4拍)"
+    },
+    {
+      "name": "tools_phrase",
+      "value": "32 拍"
+    },
+    {
+      "name": "tools_mix_range",
+      "value": "混音区间"
+    },
+    {
+      "name": "tools_seconds",
+      "value": "%1$s 秒"
+    },
+    {
+      "name": "tools_ms",
+      "value": "%1$d 毫秒"
+    },
+    {
+      "name": "tools_wheel",
+      "value": "调性轮盘"
+    },
+    {
+      "name": "tools_wheel_hint",
+      "value": "点击调性，查看可无缝衔接的调"
+    },
+    {
+      "name": "tools_compatible",
+      "value": "可衔接"
+    },
+    {
+      "name": "tools_matcher",
+      "value": "按 BPM 找歌"
+    },
+    {
+      "name": "tools_tolerance",
+      "value": "容差"
+    },
+    {
+      "name": "tools_matcher_result",
+      "value": "%1$d 首匹配"
+    },
+    {
+      "name": "tools_matcher_empty",
+      "value": "这个区间没有曲目"
+    },
+    {
+      "name": "tools_matcher_hint",
+      "value": "半速 / 倍速的曲目会自动匹配"
+    },
+    {
+      "name": "tools_planner",
+      "value": "Set 时长规划"
+    },
+    {
+      "name": "tools_planner_target",
+      "value": "目标时长(分钟)"
+    },
+    {
+      "name": "tools_planner_avg",
+      "value": "单曲平均(分钟)"
+    },
+    {
+      "name": "tools_planner_result",
+      "value": "大约需要 %1$d 首"
+    },
+    {
+      "name": "tools_planner_total",
+      "value": "合计 %1$s"
+    },
+    {
+      "name": "empty_generic",
+      "value": "暂无数据"
     }
   ]
 }

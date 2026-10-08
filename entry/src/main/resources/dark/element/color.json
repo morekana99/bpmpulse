@@ -31,6 +31,34 @@
     {
       "name": "app_glass_bg",
       "value": "#4D242424"
+    },
+    {
+      "name": "app_glass_border",
+      "value": "#B34A4A4A"
+    },
+    {
+      "name": "app_accent_green",
+      "value": "#30D158"
+    },
+    {
+      "name": "app_accent_orange",
+      "value": "#FF9F0A"
+    },
+    {
+      "name": "app_accent_red",
+      "value": "#FF453A"
+    },
+    {
+      "name": "app_accent_purple",
+      "value": "#BF5AF2"
+    },
+    {
+      "name": "app_chip_bg",
+      "value": "#333338"
+    },
+    {
+      "name": "app_divider",
+      "value": "#3A3A3F"
     }
   ]
 }

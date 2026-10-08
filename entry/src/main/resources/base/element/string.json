@@ -69,6 +69,10 @@
       "value": "Delete"
     },
     {
+      "name": "dialog_confirm",
+      "value": "Confirm"
+    },
+    {
       "name": "record_no_data",
       "value": "No records yet"
     },
@@ -89,8 +93,100 @@
       "value": "BPM"
     },
     {
-      "name": "tab_record",
-      "value": "Records"
+      "name": "tab_library",
+      "value": "Library"
+    },
+    {
+      "name": "tab_setlist",
+      "value": "Sets"
+    },
+    {
+      "name": "tab_tools",
+      "value": "Tools"
+    },
+    {
+      "name": "tool_section_pitch",
+      "value": "Pitch & Speed"
+    },
+    {
+      "name": "tool_section_key",
+      "value": "Key Compatibility"
+    },
+    {
+      "name": "tool_section_conv",
+      "value": "Conversion (from input BPM)"
+    },
+    {
+      "name": "tool_section_bpm",
+      "value": "BPM & Pitch"
+    },
+    {
+      "name": "tool_bpm_input",
+      "value": "BPM"
+    },
+    {
+      "name": "tool_pitch",
+      "value": "Pitch %s"
+    },
+    {
+      "name": "tool_pitch_reset",
+      "value": "Reset"
+    },
+    {
+      "name": "tool_pitch_semitones",
+      "value": "Pitch shifts %1$s semitone (%2$d cents)"
+    },
+    {
+      "name": "tool_target_label",
+      "value": "Reverse: hit a target BPM"
+    },
+    {
+      "name": "tool_target_bpm",
+      "value": "Target BPM"
+    },
+    {
+      "name": "tool_target_need",
+      "value": "pitch"
+    },
+    {
+      "name": "tool_target_apply",
+      "value": "Apply %1$s to slider"
+    },
+    {
+      "name": "tool_target_range",
+      "value": "Beyond slider range (±12), use the gear's pitch fader"
+    },
+    {
+      "name": "tool_pick_key",
+      "value": "Pick a key to see compatible keys"
+    },
+    {
+      "name": "tool_compat_with",
+      "value": "Compatible with %s %s"
+    },
+    {
+      "name": "tool_bpm_label",
+      "value": "Tempo"
+    },
+    {
+      "name": "tool_per_beat_sec",
+      "value": "Per beat (s)"
+    },
+    {
+      "name": "tool_per_beat_ms",
+      "value": "Per beat (ms)"
+    },
+    {
+      "name": "title_library",
+      "value": "Library"
+    },
+    {
+      "name": "title_setlist",
+      "value": "Sets"
+    },
+    {
+      "name": "title_tools",
+      "value": "Tools"
     },
     {
       "name": "title_song_info",
@@ -183,6 +279,590 @@
     {
       "name": "toast_share_failed",
       "value": "Share failed"
+    },
+    {
+      "name": "field_bpm",
+      "value": "BPM"
+    },
+    {
+      "name": "field_key",
+      "value": "Key"
+    },
+    {
+      "name": "field_genre",
+      "value": "Genre"
+    },
+    {
+      "name": "field_energy",
+      "value": "Energy"
+    },
+    {
+      "name": "field_duration",
+      "value": "Length"
+    },
+    {
+      "name": "field_note",
+      "value": "Note"
+    },
+    {
+      "name": "field_unset",
+      "value": "Not set"
+    },
+    {
+      "name": "field_section_meta",
+      "value": "DJ info (optional)"
+    },
+    {
+      "name": "duration_placeholder",
+      "value": "Length, e.g. 3:45"
+    },
+    {
+      "name": "note_placeholder",
+      "value": "Cue point, mix note..."
+    },
+    {
+      "name": "genre_placeholder",
+      "value": "Genre"
+    },
+    {
+      "name": "song_edit_title",
+      "value": "Edit Track"
+    },
+    {
+      "name": "toast_saved",
+      "value": "Saved"
+    },
+    {
+      "name": "toast_updated",
+      "value": "Updated"
+    },
+    {
+      "name": "toast_invalid_duration",
+      "value": "Length format should be m:ss"
+    },
+    {
+      "name": "library_count",
+      "value": "%1$d tracks"
+    },
+    {
+      "name": "library_count_bpm",
+      "value": "%1$d tracks · incl. BPM near %2$d"
+    },
+    {
+      "name": "library_sort_recent",
+      "value": "Recent"
+    },
+    {
+      "name": "library_sort_bpm",
+      "value": "BPM"
+    },
+    {
+      "name": "library_sort_key",
+      "value": "Key"
+    },
+    {
+      "name": "library_filter_all",
+      "value": "All"
+    },
+    {
+      "name": "library_no_match",
+      "value": "No track matches the filter"
+    },
+    {
+      "name": "library_no_match_hint",
+      "value": "Switch back to All to see every track"
+    },
+    {
+      "name": "action_edit",
+      "value": "Edit"
+    },
+    {
+      "name": "action_add_to_set",
+      "value": "Add to Set"
+    },
+    {
+      "name": "action_export",
+      "value": "Export"
+    },
+    {
+      "name": "backup_section_title",
+      "value": "Data"
+    },
+    {
+      "name": "backup_hint",
+      "value": "A JSON backup contains every track and setlist, for device migration or restore. Imported setlists are always created as new ones."
+    },
+    {
+      "name": "action_export_backup",
+      "value": "Export backup"
+    },
+    {
+      "name": "action_import_backup",
+      "value": "Import backup"
+    },
+    {
+      "name": "backup_export_title",
+      "value": "BPM Pulse backup"
+    },
+    {
+      "name": "backup_export_desc",
+      "value": "%1$d tracks · %2$d setlists"
+    },
+    {
+      "name": "import_preview_title",
+      "value": "Import preview"
+    },
+    {
+      "name": "import_preview_records_label",
+      "value": "Tracks"
+    },
+    {
+      "name": "import_preview_records",
+      "value": "%1$d total (%2$d new · %3$d duplicate)"
+    },
+    {
+      "name": "import_preview_setlists_label",
+      "value": "Setlists"
+    },
+    {
+      "name": "import_preview_setlists",
+      "value": "%1$d with %2$d tracks"
+    },
+    {
+      "name": "import_preview_invalid_label",
+      "value": "Invalid"
+    },
+    {
+      "name": "import_preview_invalid",
+      "value": "%1$d ignored"
+    },
+    {
+      "name": "action_import",
+      "value": "Import"
+    },
+    {
+      "name": "import_skip_duplicates",
+      "value": "Skip duplicates"
+    },
+    {
+      "name": "import_skip_duplicates_hint",
+      "value": "Matched by song + artist; turn off to import duplicates as new tracks"
+    },
+    {
+      "name": "import_setlist_hint",
+      "value": "Setlists are imported as new ones; name conflicts get a numeric suffix"
+    },
+    {
+      "name": "toast_import_done",
+      "value": "Imported %1$d tracks · %2$d setlists"
+    },
+    {
+      "name": "toast_import_empty",
+      "value": "The backup file has no importable data"
+    },
+    {
+      "name": "toast_import_failed",
+      "value": "Import failed. Please choose a JSON backup exported by this app"
+    },
+    {
+      "name": "action_remove",
+      "value": "Remove"
+    },
+    {
+      "name": "action_move_up",
+      "value": "Move up"
+    },
+    {
+      "name": "action_move_down",
+      "value": "Move down"
+    },
+    {
+      "name": "action_move_top",
+      "value": "Move to top"
+    },
+    {
+      "name": "action_new",
+      "value": "New"
+    },
+    {
+      "name": "action_select",
+      "value": "Select"
+    },
+    {
+      "name": "setlist_new",
+      "value": "New Set"
+    },
+    {
+      "name": "setlist_name_placeholder",
+      "value": "Set name"
+    },
+    {
+      "name": "setlist_empty",
+      "value": "No sets yet"
+    },
+    {
+      "name": "setlist_empty_hint",
+      "value": "Tap New to group tracks with a similar BPM and key into one set"
+    },
+    {
+      "name": "setlist_picker_subtitle",
+      "value": "%1$d selected"
+    },
+    {
+      "name": "setlist_picker_search_placeholder",
+      "value": "Search sets"
+    },
+    {
+      "name": "setlist_picker_empty_hint",
+      "value": "Create a set to hold these tracks"
+    },
+    {
+      "name": "setlist_picker_no_match",
+      "value": "No set matched your search"
+    },
+    {
+      "name": "setlist_rename",
+      "value": "Rename"
+    },
+    {
+      "name": "setlist_duplicate",
+      "value": "Duplicate set"
+    },
+    {
+      "name": "action_share",
+      "value": "Share"
+    },
+    {
+      "name": "setlist_clear_tracks",
+      "value": "Clear tracks"
+    },
+    {
+      "name": "setlist_delete",
+      "value": "Delete set"
+    },
+    {
+      "name": "toast_setlist_copied",
+      "value": "Set copied"
+    },
+    {
+      "name": "setlist_delete_title",
+      "value": "Delete Set"
+    },
+    {
+      "name": "setlist_delete_msg",
+      "value": "Delete set \"%1$s\"? Tracks stay in your library."
+    },
+    {
+      "name": "setlist_track_count",
+      "value": "%1$d tracks"
+    },
+    {
+      "name": "setlist_bpm_range",
+      "value": "BPM %1$d-%2$d"
+    },
+    {
+      "name": "setlist_bpm_single",
+      "value": "BPM %1$d"
+    },
+    {
+      "name": "setlist_avg_bpm",
+      "value": "Avg %1$d"
+    },
+    {
+      "name": "setlist_total_time",
+      "value": "Total %1$s"
+    },
+    {
+      "name": "setlist_no_tracks",
+      "value": "This set is empty"
+    },
+    {
+      "name": "setlist_no_tracks_hint",
+      "value": "Tap Add Tracks to pull songs in from your library"
+    },
+    {
+      "name": "setlist_add_tracks",
+      "value": "Add Tracks"
+    },
+    {
+      "name": "setlist_sort",
+      "value": "Sort"
+    },
+    {
+      "name": "setlist_sort_manual",
+      "value": "Manual sort"
+    },
+    {
+      "name": "setlist_reorder_start",
+      "value": "Manual sort (drag to reorder)"
+    },
+    {
+      "name": "setlist_reorder_hint",
+      "value": "Drag the handle up or down to reorder"
+    },
+    {
+      "name": "setlist_remove_from",
+      "value": "Remove from setlist"
+    },
+    {
+      "name": "toast_already_in_setlist",
+      "value": "Already in that setlist"
+    },
+    {
+      "name": "setlist_remove_selected",
+      "value": "Remove %1$d"
+    },
+    {
+      "name": "setlist_remove_msg",
+      "value": "Remove %1$d selected tracks from this setlist?"
+    },
+    {
+      "name": "action_done",
+      "value": "Done"
+    },
+    {
+      "name": "toast_removed_tracks",
+      "value": "Removed %1$d tracks"
+    },
+    {
+      "name": "setlist_smart_sort",
+      "value": "Auto Flow"
+    },
+    {
+      "name": "setlist_bpm_asc",
+      "value": "BPM Up"
+    },
+    {
+      "name": "setlist_bpm_desc",
+      "value": "BPM Down"
+    },
+    {
+      "name": "setlist_clear",
+      "value": "Clear"
+    },
+    {
+      "name": "setlist_clear_msg",
+      "value": "Remove all tracks from this set?"
+    },
+    {
+      "name": "setlist_curve_title",
+      "value": "BPM Flow"
+    },
+    {
+      "name": "setlist_export_title",
+      "value": "Setlist"
+    },
+    {
+      "name": "setlist_share_desc_one",
+      "value": "%1$d track setlist"
+    },
+    {
+      "name": "setlist_share_desc_other",
+      "value": "%1$d track setlist"
+    },
+    {
+      "name": "stat_tracks",
+      "value": "Tracks"
+    },
+    {
+      "name": "stat_duration",
+      "value": "Length"
+    },
+    {
+      "name": "stat_bpm_range",
+      "value": "BPM Range"
+    },
+    {
+      "name": "stat_avg_energy",
+      "value": "Avg Energy"
+    },
+    {
+      "name": "harmony_same",
+      "value": "Same"
+    },
+    {
+      "name": "harmony_perfect",
+      "value": "Harmonic"
+    },
+    {
+      "name": "harmony_dramatic",
+      "value": "Dramatic"
+    },
+    {
+      "name": "harmony_clash",
+      "value": "Clash"
+    },
+    {
+      "name": "harmony_unknown",
+      "value": "No key"
+    },
+    {
+      "name": "trans_delta",
+      "value": "%1$s%2$d"
+    },
+    {
+      "name": "trans_plus",
+      "value": "+"
+    },
+    {
+      "name": "trans_minus",
+      "value": "-"
+    },
+    {
+      "name": "picker_title",
+      "value": "Select Tracks"
+    },
+    {
+      "name": "picker_filter_all",
+      "value": "All"
+    },
+    {
+      "name": "picker_filter_bpm",
+      "value": "BPM Match"
+    },
+    {
+      "name": "picker_filter_key",
+      "value": "Key Match"
+    },
+    {
+      "name": "picker_anchor",
+      "value": "Continuing from %1$d BPM"
+    },
+    {
+      "name": "picker_anchor_key",
+      "value": "Continuing from %1$d BPM · %2$s"
+    },
+    {
+      "name": "picker_anchor_empty",
+      "value": "Pick any track to start the set"
+    },
+    {
+      "name": "picker_confirm",
+      "value": "Add %1$d"
+    },
+    {
+      "name": "picker_empty",
+      "value": "No tracks to add"
+    },
+    {
+      "name": "picker_empty_hint",
+      "value": "Record a few tracks on the BPM page first"
+    },
+    {
+      "name": "picker_search_placeholder",
+      "value": "Search library"
+    },
+    {
+      "name": "toast_added_tracks",
+      "value": "Added %1$d track(s)"
+    },
+    {
+      "name": "toast_no_selection",
+      "value": "Select at least one track"
+    },
+    {
+      "name": "toast_sorted",
+      "value": "Reordered for the smoothest flow"
+    },
+    {
+      "name": "toast_name_required",
+      "value": "Please enter a set name"
+    },
+    {
+      "name": "tools_converter",
+      "value": "BPM Calculator"
+    },
+    {
+      "name": "tools_bpm_input",
+      "value": "Enter BPM"
+    },
+    {
+      "name": "tools_half",
+      "value": "Half"
+    },
+    {
+      "name": "tools_double",
+      "value": "Double"
+    },
+    {
+      "name": "tools_beat_ms",
+      "value": "Per beat"
+    },
+    {
+      "name": "tools_bar",
+      "value": "Bar (4 beats)"
+    },
+    {
+      "name": "tools_phrase",
+      "value": "32 beats"
+    },
+    {
+      "name": "tools_mix_range",
+      "value": "Mix range"
+    },
+    {
+      "name": "tools_seconds",
+      "value": "%1$s s"
+    },
+    {
+      "name": "tools_ms",
+      "value": "%1$d ms"
+    },
+    {
+      "name": "tools_wheel",
+      "value": "Camelot Wheel"
+    },
+    {
+      "name": "tools_wheel_hint",
+      "value": "Tap a key to see which keys mix into it"
+    },
+    {
+      "name": "tools_compatible",
+      "value": "Mixes well with"
+    },
+    {
+      "name": "tools_matcher",
+      "value": "Find by BPM"
+    },
+    {
+      "name": "tools_tolerance",
+      "value": "Tolerance"
+    },
+    {
+      "name": "tools_matcher_result",
+      "value": "%1$d matches"
+    },
+    {
+      "name": "tools_matcher_empty",
+      "value": "No track within this range"
+    },
+    {
+      "name": "tools_matcher_hint",
+      "value": "Half and double time BPMs are matched automatically"
+    },
+    {
+      "name": "tools_planner",
+      "value": "Set Planner"
+    },
+    {
+      "name": "tools_planner_target",
+      "value": "Target minutes"
+    },
+    {
+      "name": "tools_planner_avg",
+      "value": "Avg minutes per track"
+    },
+    {
+      "name": "tools_planner_result",
+      "value": "About %1$d tracks"
+    },
+    {
+      "name": "tools_planner_total",
+      "value": "Total %1$s"
+    },
+    {
+      "name": "empty_generic",
+      "value": "Nothing here yet"
     }
   ]
 }

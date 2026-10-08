@@ -35,6 +35,30 @@
     {
       "name": "app_glass_border",
       "value": "#B3FFFFFF"
+    },
+    {
+      "name": "app_accent_green",
+      "value": "#20A55A"
+    },
+    {
+      "name": "app_accent_orange",
+      "value": "#D97706"
+    },
+    {
+      "name": "app_accent_red",
+      "value": "#D93A3A"
+    },
+    {
+      "name": "app_accent_purple",
+      "value": "#8B5CF6"
+    },
+    {
+      "name": "app_chip_bg",
+      "value": "#E9E9EE"
+    },
+    {
+      "name": "app_divider",
+      "value": "#D9D9DE"
     }
   ]
 }

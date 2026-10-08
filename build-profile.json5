@@ -7,18 +7,31 @@
         "material": {
           "certpath": "C:\\Users\\MoreKANA\\.ohos\\config\\default_bpmpulse_dFlishT9T6IcOUf073txF_hrSYfPKn28lYvqPZWS4XQ=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001BC1F9A317A0B22B6A172DACB364A0E44824EB015696A0E993D230ED02E77FFBA47B46B9AC87CA36",
+          "keyPassword": "0000001B6F24FC7427ED77B9026CB129E8038C24725CFF33EDDB61BAB18596245257E7A2DFE1D749DA1D1D",
           "profile": "C:\\Users\\MoreKANA\\.ohos\\config\\default_bpmpulse_dFlishT9T6IcOUf073txF_hrSYfPKn28lYvqPZWS4XQ=.p7b",
           "signAlg": "SHA256withECDSA",
           "storeFile": "C:\\Users\\MoreKANA\\.ohos\\config\\default_bpmpulse_dFlishT9T6IcOUf073txF_hrSYfPKn28lYvqPZWS4XQ=.p12",
-          "storePassword": "0000001BF83CFD8BFF8201D0CF8CE4F75D37A05EC55AC71AA8850E94E3BB4FCB645541A90CB92F55528742"
+          "storePassword": "0000001B2D526E5C5C851749C2310EE01B20E1966604CE10EAA01C8A3E6F2492C6A990B2C2986BBD36151A"
+        }
+      },
+      {
+        "name": "release",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:/Data/HMProjects/0-release files/bpmpulse/bpmPulseRelease.cer",
+          "keyAlias": "releaseKey",
+          "keyPassword": "00000019D47F36C9D586A7DCBF8EA801B2FFC56741A0D9848DA94AE8BC5427A8448212898D70794946",
+          "profile": "C:/Data/HMProjects/0-release files/bpmpulse/releaseRelease.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:/Data/HMProjects/0-release files/bpmpulse/bpmPulseRelease.p12",
+          "storePassword": "00000019E6CF21B40714A9285067F1D45C402828160D38F22889A105A36F71467ED57282778B646119"
         }
       }
     ],
     "products": [
       {
         "name": "default",
-        "signingConfig": "default",
+        "signingConfig": "release",
         "targetSdkVersion": "26.0.0",
         "compatibleSdkVersion": "26.0.0",
         "runtimeOS": "HarmonyOS",

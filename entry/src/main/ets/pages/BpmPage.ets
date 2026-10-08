@@ -1,8 +1,9 @@
 import { motion } from '@kit.MultimodalAwarenessKit';
 import { vibrator } from '@kit.SensorServiceKit';
 import { BusinessError } from '@kit.BasicServicesKit';
-import { SongRecord } from '../models/SongRecord';
+import { SongRecord, createSongRecord } from '../models/SongRecord';
 import { DatabaseHelper } from '../database/DatabaseHelper';
+import { TrackEditDialog } from '../components/TrackEditDialog';
 
 @Component
 export struct BpmPage {
@@ -13,10 +14,10 @@ export struct BpmPage {
   @State averageInterval: number = 0;
   @State lastTapTime: number = 0;
   private dialogController: CustomDialogController = new CustomDialogController({
-    builder: BpmRecordDialog({
-      bpm: this.bpm,
-      onSave: (songName: string, artistName: string) => {
-        this.doSaveRecord(songName, artistName);
+    builder: TrackEditDialog({
+      isNew: true,
+      onSave: (record: SongRecord) => {
+        this.doSaveRecord(record);
       },
       onCancel: () => {
         this.dialogController.close();
@@ -110,24 +111,20 @@ export struct BpmPage {
   }
 
   // 由自定义弹窗回调：保存一条记录
-  doSaveRecord(songName: string, artistName: string) {
-    if (!songName.trim() || !artistName.trim()) {
+  doSaveRecord(record: SongRecord) {
+    if (!record.songName.trim()) {
       return;
     }
 
-    const record: SongRecord = {
-      id: Date.now(),
-      songName: songName,
-      artistName: artistName,
-      bpm: this.bpm,
-      timestamp: Date.now(),
-      tapCount: this.tapCount,
-      averageInterval: this.averageInterval
-    };
-
     DatabaseHelper.getInstance().insert(record).then(() => {
-      // 通知 RecordPage 刷新数据
+      // 通知曲库/歌单刷新数据
       AppStorage.setOrCreate('recordsNeedRefresh', Date.now());
+      AppStorage.setOrCreate('setlistsNeedRefresh', Date.now());
+      try {
+        this.getUIContext().getPromptAction().showToast({ message: $r('app.string.toast_saved'), duration: 1500 });
+      } catch (error) {
+        // 提示失败不影响保存结果
+      }
     }).catch((err: Error) => {
       console.error('保存记录失败:', err.message);
     });
@@ -137,12 +134,14 @@ export struct BpmPage {
   }
 
   openRecordDialog() {
-    // 每次打开用当前 bpm 重建控制器，避免字段初始化时捕获的初始值（0）
+    // 每次打开都用当前测量结果重建控制器，避免字段初始化时捕获的初始值（0）
+    const draft: SongRecord = createSongRecord('', '', this.bpm, this.tapCount, this.averageInterval);
     this.dialogController = new CustomDialogController({
-      builder: BpmRecordDialog({
-        bpm: this.bpm,
-        onSave: (songName: string, artistName: string) => {
-          this.doSaveRecord(songName, artistName);
+      builder: TrackEditDialog({
+        record: draft,
+        isNew: true,
+        onSave: (record: SongRecord) => {
+          this.doSaveRecord(record);
         },
         onCancel: () => {
           this.dialogController.close();
@@ -219,6 +218,8 @@ export struct BpmPage {
           .fontStyle(FontStyle.Italic)
           .fontWeight(FontWeight.Bold)
           .fontFamily('cursive')
+          // 本页在 Index 里已隐藏 HDS 标题栏，但顶部留白刻意保持 100 不变：
+          // 标题位置与有标题栏时完全一致，隐藏标题栏只是少一条空栏，不引起内容上移。
           .margin({ top: 100, bottom: 4 })
           .fontColor($r('app.color.app_text_primary'))
           .letterSpacing(0.5)
@@ -316,26 +317,19 @@ export struct BpmPage {
           })
       )
 
-      // 圆形浮动按钮 — HDS 沉浸光感 + 主题蓝色 + 图形加号
+      // 圆形浮动按钮 — 与 SetlistDetailPage 一致的实心蓝圆 + 白色加号 + 阴影
       Row() {
-        Column() {
+        Button({ type: ButtonType.Circle }) {
           SymbolGlyph($r('sys.symbol.plus'))
-            .fontSize(36)
-            .fontWeight(FontWeight.Bold)
-            .fontColor([$r('app.color.app_brand_blue')])
+            .fontSize(26)
+            .fontWeight(FontWeight.Bolder)
+            .fontColor([Color.White])
             .renderingStrategy(SymbolRenderingStrategy.SINGLE)
         }
-        .width(64)
-        .height(64)
-        .borderRadius(32)
-        .justifyContent(FlexAlign.Center)
-        .alignItems(HorizontalAlign.Center)
-        // API 26 沉浸光感生效范围限制：systemMaterial 仅在 Navigation 标题栏 /
-        // 底部 TabBar / 弹窗类组件生效。悬浮加号按钮位于 TabContent 内容区，超出生效范围，
-        // 故改用 backgroundBlurStyle 实现液态玻璃磨砂质感（系统统一接管模糊与深浅色自适应），
-        // 加号图形仍使用主题蓝色呈现。
-        .backgroundBlurStyle(BlurStyle.Regular)
-        .backgroundColor($r('app.color.app_glass_bg'))
+        .width(56)
+        .height(56)
+        .backgroundColor($r('app.color.app_brand_blue'))
+        .shadow({ radius: 12, color: '#30000000', offsetX: 0, offsetY: 6 })
         .onClick(() => {
           this.openRecordDialog();
         })
@@ -353,106 +347,6 @@ export struct BpmPage {
     }
     .width('100%')
     .height('100%')
-  }
-}
-
-// 添加记录弹窗：采用官方 CustomDialog 组件，模态居中卡片。
-// 整体使用 HDS 沉浸材质（systemMaterial 模糊背景，透出底层内容）；
-// 输入框与按钮无边框，使用 app_bg_card 纯色块（浅色纯白 / 深色 #242424）与模糊背景形成对比，深浅模式均清晰。
-// autoCancel: false，仅点击"取消"按钮或系统返回键才会关闭，点击弹窗外其它区域不消失。
-// 由 CustomDialogController 原生避让软键盘，首个输入框 defaultFocus 自动弹出键盘。
-@CustomDialog
-struct BpmRecordDialog {
-  controller: CustomDialogController = new CustomDialogController({ builder: '' });
-  bpm: number = 0;
-  onSave: (songName: string, artistName: string) => void = () => {};
-  onCancel: () => void = () => {};
-  @State songName: string = '';
-  @State artistName: string = '';
-
-  // 每次打开重置输入，避免上次内容残留
-  aboutToAppear(): void {
-    this.songName = '';
-    this.artistName = '';
-  }
-
-  build() {
-    Column() {
-      Text($r('app.string.bpm_save_info'))
-        .fontSize(20)
-        .fontWeight(FontWeight.Bold)
-        .fontColor($r('app.color.app_text_primary'))
-        .margin({ top: 24, bottom: 20 })
-
-      TextInput({ placeholder: $r('app.string.song_name_placeholder') })
-        .width('80%')
-        .height(48)
-        // 无边框：用 app_bg_card 纯色块（浅色纯白 / 深色 #242424）与 HDS 模糊半透明背景形成对比
-        .backgroundColor($r('app.color.app_bg_card'))
-        .borderRadius(8)
-        .padding({ left: 12, right: 12 })
-        .margin({ bottom: 16 })
-        .defaultFocus(true)
-        .onChange((value: string) => {
-          this.songName = value;
-        })
-
-      TextInput({ placeholder: $r('app.string.artist_placeholder') })
-        .width('80%')
-        .height(48)
-        .backgroundColor($r('app.color.app_bg_card'))
-        .borderRadius(8)
-        .padding({ left: 12, right: 12 })
-        .margin({ bottom: 16 })
-        .onChange((value: string) => {
-          this.artistName = value;
-        })
-
-      Row() {
-        Text('BPM: ')
-          .fontSize(16)
-          .fontColor($r('app.color.app_text_secondary'))
-        Text(this.bpm.toString())
-          .fontSize(16)
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.app_brand_blue'))
-      }
-      .margin({ bottom: 24 })
-
-      Row() {
-        Button($r('app.string.dialog_cancel'), { type: ButtonType.Capsule })
-          .width(100)
-          .height(40)
-          // 无边框：用 app_bg_card 纯色块与 HDS 模糊背景区分，深色模式下同样清晰
-          .backgroundColor($r('app.color.app_bg_card'))
-          .fontColor($r('app.color.app_text_primary'))
-          .onClick(() => {
-            this.onCancel();
-          })
-          .margin({ right: 16 })
-
-        Button($r('app.string.dialog_save'), { type: ButtonType.Capsule })
-          .width(100)
-          .height(40)
-          .backgroundColor(this.songName.trim().length > 0 && this.artistName.trim().length > 0 ? $r('app.color.app_brand_blue') : $r('app.color.app_text_hint'))
-          .fontColor(this.songName.trim().length > 0 && this.artistName.trim().length > 0 ? Color.White : $r('app.color.app_bg_card'))
-          .enabled(this.songName.trim().length > 0 && this.artistName.trim().length > 0)
-          .onClick(() => {
-            this.onSave(this.songName, this.artistName);
-          })
-      }
-      .margin({ bottom: 24 })
-    }
-    .width('82%')
-    // 真正的系统材质（systemMaterial，需 customStyle:false）在此环境渲染极淡、无可见边框，观感接近透明；
-    // 故弹窗沿用与加号/搜索栏一致的 HDS 模糊玻璃（backgroundBlurStyle）+ 半透明底色，并显式加一道边框，
-    // 形成清晰可见的液态玻璃卡片，深浅模式均成立。
-    .backgroundColor($r('app.color.app_glass_bg'))
-    .border({ width: 1, color: $r('app.color.app_glass_border') })
-    .borderRadius(16)
-    .shadow({ radius: 20, color: '#40000000', offsetX: 0, offsetY: 4 })
-    .backgroundBlurStyle(BlurStyle.Thick)
-    .alignItems(HorizontalAlign.Center)
   }
 }
 

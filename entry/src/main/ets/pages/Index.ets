@@ -1,13 +1,17 @@
 import { HdsNavigation, HdsNavigationTitleMode, HdsTabs, HdsTabsController, ScrollEffectType, hdsMaterial, TextStyleMode } from '@kit.UIDesignKit';
-import { systemShare } from '@kit.ShareKit';
-import { uniformTypeDescriptor as utd } from '@kit.ArkData';
-import { fileUri, fileIo as fs } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
+import { SongRecord } from '../models/SongRecord';
+import { SetlistDetailParam, SetlistPickerParam, TrackPickerParam } from '../models/Setlist';
+import { DatabaseHelper } from '../database/DatabaseHelper';
+import { buildLibraryText } from '../utils/ExportText';
+import { shareTextFile } from '../utils/ShareUtils';
 import { BpmPage } from './BpmPage';
 import { RecordPage } from './RecordPage';
-import { SearchPage } from './SearchPage';
-import { SongRecord } from '../models/SongRecord';
-import { DatabaseHelper } from '../database/DatabaseHelper';
+import { SetlistPage } from './SetlistPage';
+import { SetlistDetailPage } from './SetlistDetailPage';
+import { TrackPickerPage } from './TrackPickerPage';
+import { SetlistPickerPage } from './SetlistPickerPage';
+import { ToolsPage } from './ToolsPage';
 
 @Component
 struct TabBarItem {
@@ -23,7 +27,7 @@ struct TabBarItem {
   build() {
     Column({ space: 2 }) {
       if (this.isMultiSelectMode) {
-        // 多选操作图标也用系统符号：SINGLE 渲染为扁平纯色，随深浅色适配
+        // 多选模式下，tab 项直接切换为操作按钮，复用 HDS tab 栏位置，而不是新增独立栏
         SymbolGlyph(this.multiIcon)
           .fontSize(24)
           .fontColor([$r('app.color.app_text_primary')])
@@ -35,9 +39,6 @@ struct TabBarItem {
           .fontColor($r('app.color.app_text_primary'))
           .maxLines(1)
       } else {
-        // 使用系统符号图标（SymbolGlyph）：renderingStrategy(SINGLE) 渲染为扁平纯色矢量图标，
-        // 随深浅色自动适配；fontColor 传入颜色数组，选中时切换品牌蓝实现变色。
-        // 图标与下方文字在 Column 内均水平居中，共用同一中心轴保证对齐。
         SymbolGlyph(this.icon)
           .fontSize(24)
           .fontColor([this.idx === this.currentTabIndex ? $r('app.color.app_brand_blue') : $r('app.color.app_text_primary')])
@@ -58,6 +59,8 @@ struct TabBarItem {
     .onClick(() => {
       if (this.isMultiSelectMode && this.multiAction) {
         this.multiAction();
+      } else {
+        AppStorage.setOrCreate('currentTabIndex', this.idx);
       }
     })
   }
@@ -67,6 +70,7 @@ struct TabBarItem {
 @Component
 struct Index {
   private tabsController: HdsTabsController = new HdsTabsController();
+  navPathStack: NavPathStack = new NavPathStack();
   @StorageLink('currentTabIndex') currentTabIndex: number = 0;
   @StorageLink('isMultiSelectMode') isMultiSelectMode: boolean = false;
   @StorageLink('multiSelectIds') multiSelectIds: number[] = [];
@@ -75,8 +79,17 @@ struct Index {
 
   private scrollerForBpm: Scroller = new Scroller();
   private scrollerForRecord: Scroller = new Scroller();
+  private scrollerForSetlist: Scroller = new Scroller();
+  private scrollerForTools: Scroller = new Scroller();
+  private scrollerForRecordMS1: Scroller = new Scroller();
+  private scrollerForRecordMS2: Scroller = new Scroller();
+  private scrollerForRecordMS3: Scroller = new Scroller();
 
   onBackPress(): boolean {
+    if (this.navPathStack.size() > 0) {
+      this.navPathStack.pop();
+      return true;
+    }
     if (this.isSearching) {
       this.getUIContext()?.animateTo({ duration: 300, curve: Curve.EaseInOut }, () => {
         AppStorage.setOrCreate('isSearching', false);
@@ -86,6 +99,7 @@ struct Index {
     if (this.isMultiSelectMode) {
       AppStorage.setOrCreate('isMultiSelectMode', false);
       AppStorage.setOrCreate('multiSelectIds', [] as number[]);
+      AppStorage.setOrCreate('currentTabIndex', 1);
       return true;
     }
     return false;
@@ -120,43 +134,8 @@ struct Index {
       if (this.isAllSelected()) {
         AppStorage.setOrCreate('multiSelectIds', []);
       } else {
-        if (this.allRecordIds && this.allRecordIds.length > 0) {
-          AppStorage.setOrCreate('multiSelectIds', [...this.allRecordIds]);
-        }
+        AppStorage.setOrCreate('multiSelectIds', [...this.allRecordIds]);
       }
-    }
-  }
-
-  @Builder
-  bpmTabBar() {
-    TabBarItem({
-      idx: 0,
-      icon: $r('sys.symbol.music_fill'),
-      label: $r('app.string.tab_bpm'),
-      multiIcon: $r('sys.symbol.trash'),
-      multiLabel: $r('app.string.dialog_delete'),
-      multiAction: (): void => this.deleteSelectedRecords()
-    })
-  }
-
-  @Builder
-  recordTabBar() {
-    TabBarItem({
-      idx: 1,
-      icon: $r('sys.symbol.heart_fill'),
-      label: $r('app.string.tab_record'),
-      multiIcon: $r('sys.symbol.arrowshape_turn_up_right'),
-      multiLabel: $r('app.string.share'),
-      multiAction: (): Promise<void> => this.shareSelectedRecords()
-    })
-  }
-
-  toggleMultiSelect(): void {
-    if (this.isMultiSelectMode) {
-      AppStorage.setOrCreate('isMultiSelectMode', false);
-      AppStorage.setOrCreate('multiSelectIds', [] as number[]);
-    } else {
-      AppStorage.setOrCreate('isMultiSelectMode', true);
     }
   }
 
@@ -182,18 +161,19 @@ struct Index {
           DatabaseHelper.getInstance().deleteByIds(ids).then((rows: number) => {
             AppStorage.setOrCreate('isMultiSelectMode', false);
             AppStorage.setOrCreate('multiSelectIds', [] as number[]);
+            AppStorage.setOrCreate('currentTabIndex', 1);
             AppStorage.setOrCreate('recordsNeedRefresh', Date.now());
             try {
               this.getUIContext().getPromptAction().showToast({ message: $r('app.string.toast_deleted_count', rows), duration: 2000 });
             } catch (error) {
-              // TODO: Implement error handling.
+              // 提示失败不阻断主流程
             }
           }).catch((err: Error) => {
             console.error('删除记录失败:', err.message, JSON.stringify(err));
             try {
               this.getUIContext().getPromptAction().showToast({ message: $r('app.string.toast_delete_failed'), duration: 2000 });
             } catch (error) {
-              // TODO: Implement error handling.
+              // 提示失败不阻断主流程
             }
           });
         }
@@ -208,146 +188,241 @@ struct Index {
     }
     try {
       const allRecords = await DatabaseHelper.getInstance().queryAll();
-      const selectedRecords = allRecords.filter(r => ids.includes(r.id));
-
-      let text = 'BPM记录\n' + '='.repeat(36) + '\n\n';
-      selectedRecords.forEach((record, index) => {
-        const date = new Date(record.timestamp);
-        const timeStr = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-        text += `【${index + 1}】${record.songName} - ${record.artistName}\n`;
-        text += `     BPM: ${record.bpm}  |  点击: ${record.tapCount}次  |  间隔: ${record.averageInterval.toFixed(2)}秒\n`;
-        text += `     时间: ${timeStr}\n\n`;
-      });
-      text += '='.repeat(36) + '\n';
-      text += `导出时间: ${new Date().toLocaleString()}\n`;
-
+      const selected: SongRecord[] = allRecords.filter((r: SongRecord) => ids.includes(r.id));
+      const content: string = buildLibraryText(selected);
       const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
-      const fileName = `BPM记录_${Date.now()}.txt`;
-      const filePath = `${context.cacheDir}/${fileName}`;
-      const file = fs.openSync(filePath, fs.OpenMode.CREATE | fs.OpenMode.TRUNC | fs.OpenMode.WRITE_ONLY);
-      fs.writeSync(file.fd, text);
-      fs.closeSync(file);
-
-      const uri = fileUri.getUriFromPath(filePath);
-      const shareTitle: string = context.resourceManager.getStringSync($r('app.string.share_sheet_title').id);
-      const descRes: Resource = selectedRecords.length === 1 ? $r('app.string.share_sheet_desc_one') : $r('app.string.share_sheet_desc_other');
-      const shareDesc: string = context.resourceManager.getStringSync(descRes.id, selectedRecords.length);
-      const shareData: systemShare.SharedData = new systemShare.SharedData({
-        utd: utd.UniformDataType.TEXT,
-        uri: uri,
-        title: shareTitle,
-        description: shareDesc
-      });
-
-      const controller: systemShare.ShareController = new systemShare.ShareController(shareData);
-      controller.show(context, {
-        previewMode: systemShare.SharePreviewMode.DETAIL,
-        selectionMode: systemShare.SelectionMode.SINGLE
-      }).catch(() => {
-        // TODO: Implement error handling.
-      });
-
+      const title: string = context.resourceManager.getStringSync($r('app.string.share_sheet_title').id);
+      const descRes: Resource = selected.length === 1 ? $r('app.string.share_sheet_desc_one') : $r('app.string.share_sheet_desc_other');
+      const description: string = context.resourceManager.getStringSync(descRes.id, selected.length);
+      await shareTextFile(context, `BPM记录_${Date.now()}.txt`, content, title, description);
     } catch (err) {
       console.error('分享失败:', JSON.stringify(err));
       try {
         this.getUIContext().getPromptAction().showToast({ message: $r('app.string.toast_share_failed'), duration: 2000 });
       } catch (error) {
-        // TODO: Implement error handling.
+        // 提示失败不阻断主流程
       }
     }
   }
 
+  addToSetlist() {
+    const ids: number[] = AppStorage.get<number[]>('multiSelectIds') || [];
+    if (ids.length === 0) {
+      return;
+    }
+    // 选歌单是整页（与「选曲目」页对称），歌单多时可整页滚动 + 搜索
+    const param: SetlistPickerParam = {
+      recordIds: ids,
+      excludeSetlistId: -1,
+      onDone: (added: number, name: string) => {
+        if (added > 0) {
+          AppStorage.setOrCreate('isMultiSelectMode', false);
+          AppStorage.setOrCreate('multiSelectIds', [] as number[]);
+          AppStorage.setOrCreate('currentTabIndex', 1);
+          try {
+            this.getUIContext().getPromptAction().showToast({ message: $r('app.string.toast_added_tracks', added), duration: 1800 });
+          } catch (error) {
+            // 提示失败不阻断主流程
+          }
+        }
+      }
+    };
+    this.navPathStack.pushPath({ name: 'SetlistPicker', param: param });
+  }
+
+  @Builder
+  bpmTabBar() {
+    TabBarItem({
+      idx: 0,
+      icon: $r('sys.symbol.waveform'),
+      label: $r('app.string.tab_bpm'),
+      multiIcon: $r('sys.symbol.trash'),
+      multiLabel: $r('app.string.dialog_delete'),
+      multiAction: (): void => this.deleteSelectedRecords()
+    })
+  }
+
+  @Builder
+  libraryTabBar() {
+    TabBarItem({
+      idx: 1,
+      icon: $r('sys.symbol.music'),
+      label: $r('app.string.tab_library'),
+      multiIcon: $r('sys.symbol.arrowshape_turn_up_right'),
+      multiLabel: $r('app.string.action_export'),
+      multiAction: (): void => { this.shareSelectedRecords(); }
+    })
+  }
+
+  @Builder
+  setlistTabBar() {
+    TabBarItem({
+      idx: 2,
+      icon: $r('sys.symbol.list_bullet'),
+      label: $r('app.string.tab_setlist'),
+      multiIcon: $r('sys.symbol.plus'),
+      multiLabel: $r('app.string.action_add_to_set'),
+      multiAction: (): void => this.addToSetlist()
+    })
+  }
+
+  @Builder
+  toolsTabBar() {
+    TabBarItem({
+      idx: 3,
+      icon: $r('sys.symbol.gearshape'),
+      label: $r('app.string.tab_tools')
+    })
+  }
+
+  @Builder
+  pageMap(name: string, param: Object) {
+    if (name === 'SetlistDetail') {
+      SetlistDetailPage({ setlistId: (param as SetlistDetailParam).setlistId, stack: this.navPathStack });
+    } else if (name === 'TrackPicker') {
+      TrackPickerPage({
+        setlistId: (param as TrackPickerParam).setlistId,
+        anchorBpm: (param as TrackPickerParam).anchorBpm,
+        anchorKey: (param as TrackPickerParam).anchorKey,
+        stack: this.navPathStack
+      });
+    } else if (name === 'SetlistPicker') {
+      SetlistPickerPage({
+        recordIds: (param as SetlistPickerParam).recordIds,
+        excludeSetlistId: (param as SetlistPickerParam).excludeSetlistId,
+        onDone: (param as SetlistPickerParam).onDone,
+        stack: this.navPathStack
+      });
+    }
+  }
+
+  titleMain(): ResourceStr {
+    if (this.isMultiSelectMode) {
+      return this.multiSelectIds.length === 0
+        ? $r('app.string.multiselect_none')
+        : $r('app.string.multiselect_selected', this.multiSelectIds.length);
+    }
+    if (this.currentTabIndex === 1) {
+      if (this.isMultiSelectMode) {
+        return this.multiSelectIds.length === 0
+          ? $r('app.string.multiselect_none')
+          : $r('app.string.multiselect_selected', this.multiSelectIds.length);
+      }
+      return $r('app.string.title_library');
+    }
+    if (this.currentTabIndex === 2) {
+      return $r('app.string.title_setlist');
+    }
+    if (this.currentTabIndex === 3) {
+      return $r('app.string.title_tools');
+    }
+    return '';
+  }
+
   build() {
-    // Stack 常驻主树方案：主页面（含 HdsTabs 底栏）始终存在、不被销毁重建，
-    // 搜索页作为顶层覆盖层叠加。避免 HdsTabs 底栏 ADAPTIVE 材质在重建时重新采样背景引发闪烁。
-    Stack() {
-      // 底层：常驻主页面
-      HdsNavigation() {
-        HdsTabs({ controller: this.tabsController, index: this.currentTabIndex }) {
+    HdsNavigation(this.navPathStack) {
+      HdsTabs({ controller: this.tabsController, index: this.isMultiSelectMode ? 0 : this.currentTabIndex }) {
+        if (this.isMultiSelectMode) {
+          // 多选模式：底部栏变为 3 个官方 HDS tab 操作按钮（删除 / 添加歌单 / 导出），栏长相应缩短为 3
+          TabContent() {
+            RecordPage({ scroller: this.scrollerForRecordMS1, stack: this.navPathStack })
+          }
+          .tabBar(this.bpmTabBar)
+
+          TabContent() {
+            RecordPage({ scroller: this.scrollerForRecordMS2, stack: this.navPathStack })
+          }
+          .tabBar(this.setlistTabBar)
+
+          TabContent() {
+            RecordPage({ scroller: this.scrollerForRecordMS3, stack: this.navPathStack })
+          }
+          .tabBar(this.libraryTabBar)
+        } else {
           TabContent() {
             BpmPage({ scroller: this.scrollerForBpm })
           }
           .tabBar(this.bpmTabBar)
 
           TabContent() {
-            RecordPage({ scroller: this.scrollerForRecord })
+            RecordPage({ scroller: this.scrollerForRecord, stack: this.navPathStack })
           }
-          .tabBar(this.recordTabBar)
-        }
-        .barOverlap(true)
-        .barPosition(BarPosition.End)
-        .vertical(false)
-        .animationDuration(0)
-        .scrollable(false)
-        .onChange((index: number) => {
-          AppStorage.set('currentTabIndex', index);
-        })
-        .barFloatingStyle({
-          barBottomMargin: 28,
-          systemMaterialEffect: {
-            materialType: hdsMaterial.MaterialType.ADAPTIVE,
-            materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
-          },
-          barOpacity: 0.99,
-          lightColor: '#4CFFFFFF',
-          adaptToHandedness: true,
-          gradientMask: {
-            maskColor: '#00FFFFFF',
-            maskHeight: 92
-          }
-        })
-      }
-      .mode(NavigationMode.Stack)
-      .titleBar({
-        content: {
-          title: this.currentTabIndex === 0
-            ? { mainTitle: '' }
-            : { mainTitle: !this.isMultiSelectMode ? $r('app.string.title_song_info') : (this.multiSelectIds.length === 0 ? $r('app.string.multiselect_none') : $r('app.string.multiselect_selected', this.multiSelectIds.length)) },
-          menu: this.currentTabIndex === 1 ? {
-            value: [
-              {
-                content: {
-                  label: this.isMultiSelectMode ? (this.isAllSelected() ? $r('app.string.multiselect_deselect_all') : $r('app.string.multiselect_select_all')) : $r('app.string.multiselect_multi'),
-                  type: TextStyleMode.NORMAL,
-                  action: (): void => { this.multiSelectAction(); }
-                }
-              }
-            ],
-            maxCount: 1
-          } : undefined
-        },
-        style: {
-          scrollEffectOpts: {
-            enableScrollEffect: true,
-            scrollEffectType: ScrollEffectType.GRADIENT_BLUR
-          },
-          systemMaterialEffect: {
-            materialType: hdsMaterial.MaterialType.ADAPTIVE,
-            materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
-          }
-        },
-        avoidLayoutSafeArea: true,
-        enableComponentSafeArea: false
-      })
-      .titleMode(HdsNavigationTitleMode.MINI)
-      .bindToScrollable([this.scrollerForBpm, this.scrollerForRecord])
-      .hideBackButton(!(this.isMultiSelectMode || this.isSearching))
-      .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
-      .width('100%')
-      .height('100%')
-      // 搜索打开时底层不响应触摸，避免点击穿透到被覆盖的主页面
-      .hitTestBehavior(this.isSearching ? HitTestMode.None : HitTestMode.Default)
+          .tabBar(this.libraryTabBar)
 
-      // 顶层：搜索覆盖层（仅搜索时显示，进入淡入放大、退出反向淡出缩小，主页面全程不销毁）
-      if (this.isSearching) {
-        SearchPage()
-          .transition(
-            TransitionEffect.opacity(0)
-              .combine(TransitionEffect.scale({ x: 0.96, y: 0.96 }))
-              .animation({ duration: 320, curve: Curve.Friction })
-          )
+          TabContent() {
+            SetlistPage({ stack: this.navPathStack, scroller: this.scrollerForSetlist })
+          }
+          .tabBar(this.setlistTabBar)
+
+          TabContent() {
+            ToolsPage({ stack: this.navPathStack, scroller: this.scrollerForTools })
+          }
+          .tabBar(this.toolsTabBar)
+        }
       }
+      .barOverlap(true)
+      .barPosition(BarPosition.End)
+      .vertical(false)
+      .animationDuration(0)
+      .scrollable(false)
+      .onChange((index: number) => {
+        AppStorage.set('currentTabIndex', index);
+      })
+      .barFloatingStyle({
+        barBottomMargin: 28,
+        systemMaterialEffect: {
+          materialType: hdsMaterial.MaterialType.ADAPTIVE,
+          materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
+        },
+        barOpacity: 0.99,
+        lightColor: '#4CFFFFFF',
+        adaptToHandedness: true,
+        gradientMask: {
+          maskColor: '#00FFFFFF',
+          maskHeight: 92
+        }
+      })
     }
+    .mode(NavigationMode.Stack)
+    .titleBar({
+      content: {
+        title: { mainTitle: this.titleMain() },
+        menu: this.isMultiSelectMode || this.currentTabIndex === 1 ? {
+          value: [
+            {
+              content: {
+                label: this.isMultiSelectMode
+                  ? (this.isAllSelected() ? $r('app.string.multiselect_deselect_all') : $r('app.string.multiselect_select_all'))
+                  : $r('app.string.multiselect_multi'),
+                type: TextStyleMode.NORMAL,
+                action: (): void => { this.multiSelectAction(); }
+              }
+            }
+          ],
+          maxCount: 1
+        } : undefined
+      },
+      style: {
+        scrollEffectOpts: {
+          enableScrollEffect: true,
+          scrollEffectType: ScrollEffectType.GRADIENT_BLUR
+        },
+        systemMaterialEffect: {
+          materialType: hdsMaterial.MaterialType.ADAPTIVE,
+          materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
+        }
+      },
+      avoidLayoutSafeArea: true,
+      enableComponentSafeArea: false
+    })
+    .titleMode(HdsNavigationTitleMode.MINI)
+    // BPM 页（首页）自带大标题，顶部那条空 HDS 标题栏只是白占一条，按当前 tab 隐藏；
+    // 曲库 / 歌单 / 工具 以及多选模式不变（多选时三个 tab 都是曲库页，需要标题栏显示已选数量与全选按钮）。
+    .hideTitleBar(!this.isMultiSelectMode && this.currentTabIndex === 0, false)
+    .navDestination(this.pageMap)
+    .bindToScrollable([this.scrollerForBpm, this.scrollerForRecord, this.scrollerForSetlist, this.scrollerForTools])
+    .hideBackButton(!(this.isMultiSelectMode || this.isSearching || this.navPathStack.size() > 0))
+    .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
     .width('100%')
     .height('100%')
   }
